@@ -1,0 +1,24 @@
+{
+  "name": "modeljs",
+  "description": "Stand-alone Javascript Model",
+  "main": "dist/model.js",
+  "authors": [
+    "Ronald Borla"
+  ],
+  "license": "MIT",
+  "keywords": [
+    "ronaldborla",
+    "model"
+  ],
+  "homepage": "https://github.com/ronaldborla/model",
+  "moduleType": [
+    "globals"
+  ],
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ]
+}
