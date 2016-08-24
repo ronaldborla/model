@@ -43,9 +43,9 @@ window.Model = (function(window, undefined) {
       // Loop through schema
       self.schema.forEach(function(key) {
         // Only if default is defined
-        if (utils.isDefined(key.default)) {
+        if (key.hasDefault()) {
           // Set default value
-          self[key.name] = key.default;
+          self[key.name] = key.getDefault(self);
         }
       });
       // Return self
@@ -1359,7 +1359,7 @@ window.Model = (function(window, undefined) {
   /**
    * Always return false
    */
-  Types.Any.is = function(value) {
+  Types.Self.is = function(value) {
     // Return false
     return false;
   };
@@ -1437,7 +1437,7 @@ window.Model = (function(window, undefined) {
 
     // The translated
     var type = definition.type || definition;
-
+    
     // If type is a string
     if (utils.is('String', type)) {
       // Get from Types
@@ -1447,7 +1447,7 @@ window.Model = (function(window, undefined) {
     // If instance of Type
     if (type instanceof Model.Schema.Type) {
       // If type is self
-      if (type.match(Model.Schema.Types.Self)) {
+      if (type.match('Self')) {
         // Create new based on self
         this.type = new Model.Schema.Type(type.name, this.schema.Constructor);
         // Set original
@@ -1592,6 +1592,18 @@ window.Model = (function(window, undefined) {
   };
 
   /**
+   * Get default value
+   */
+  Key.prototype.getDefault = function(model) {
+    // Execute if method
+    return utils.isFunction(this.default) ? 
+           // Call method
+           this.default.apply(this, utils.isDefined(model) ? [model] : []) :
+           // Return as is
+           this.default;
+  };
+
+  /**
    * Enum
    */
   Key.prototype.isValidEnum = function(value) {
@@ -1620,10 +1632,15 @@ window.Model = (function(window, undefined) {
         });
         // Set enumerable
         this[attribute] = enumerable;
-        // If there's default and it's invalid
-        if (this.hasDefault() && !this.isValidEnum(this.default)) {
-          // Throw
-          this.throw('Invalid enum default value: ' + this.default);
+        // If there's default
+        if (this.hasDefault()) {
+          // Get default value
+          var defaultValue = this.getDefault();
+          // If not valid enum
+          if (!this.isValidEnum(defaultValue)) {
+            // Throw
+            this.throw('Invalid enum default value: ' + this.default);
+          }
         }
         break;
     }
@@ -1646,7 +1663,7 @@ window.Model = (function(window, undefined) {
       type: this.type.original || this.type
     };
     // If there's default
-    if (utils.isDefined(this.default)) {
+    if (this.hasDefault()) {
       // Add
       json.default = this.default;
     }
@@ -1667,5 +1684,3 @@ window.Model = (function(window, undefined) {
 
   // Inject window, Model, and utils
 })(window, window.Model, window.Model.utils);
-
-//# sourceMappingURL=model.js.map

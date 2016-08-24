@@ -20,7 +20,7 @@
   /**
    * Always return false
    */
-  Types.Any.is = function(value) {
+  Types.Self.is = function(value) {
     // Return false
     return false;
   };

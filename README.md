@@ -6,4 +6,4 @@ Model JS is a stand-alone Javascript Model to represent documents and collection
 
 Install via Bower
 
-  bower install modeljs --save
+    bower install modeljs --save

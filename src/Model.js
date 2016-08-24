@@ -43,9 +43,9 @@ window.Model = (function(window, undefined) {
       // Loop through schema
       self.schema.forEach(function(key) {
         // Only if default is defined
-        if (utils.isDefined(key.default)) {
+        if (key.hasDefault()) {
           // Set default value
-          self[key.name] = key.default;
+          self[key.name] = key.getDefault(self);
         }
       });
       // Return self

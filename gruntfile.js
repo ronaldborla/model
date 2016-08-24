@@ -61,7 +61,7 @@ module.exports = function (grunt) {
         src: main,
         dest: 'dist/model.js',
         options: {
-          sourceMap: true
+          sourceMap: false
         }
       }
     },
@@ -69,7 +69,7 @@ module.exports = function (grunt) {
       main: {
         options: {
           mangle: false,
-          sourceMap: true
+          sourceMap: false
         },
         files: {
           'dist/model.min.js': 'dist/model.js'
