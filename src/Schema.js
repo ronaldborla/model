@@ -11,12 +11,14 @@
    */
   var Schema = utils.inherit(window.Array, function(construct) {
     // Return Constructor
-    return function Schema(Constructor, schema) {
+    return function Schema(Constructor, schema, parent) {
       // Self
       var self = construct(this);
 
       // This Constructor
       this.Constructor = Constructor;
+      // Parent schema
+      this.parent = parent || null;
 
       // If there's schema
       if (utils.isDefined(schema)) {

@@ -73,7 +73,7 @@ window.Model = (function(window, undefined) {
       // Create
       attributes[name] = key.evaluate(value, this);
       // If result is an object
-      if (typeof attributes[name] === 'object') {
+      if (attributes[name] && typeof attributes[name] === 'object') {
         // Set its parent
         utils.$(attributes[name]).parent = this;
       }
@@ -139,18 +139,22 @@ window.Model = (function(window, undefined) {
       // Parent schema
       var parentSchema = this.prototype.schema,
           // The child schema
-          childSchema = parentSchema.export(extendSchema);
-      // Define child
-      var defineChild = function(construct, methods, virtuals, statics) {
-        // Execute defineModel
-        return defineModel(function(self, args) {
-          // Apply parent's constructor
-          parentSchema.Constructor.apply(self, args);
-          // Pass native construct method to 5th param
-        }, methods, virtuals, statics, construct);
-      };
-      // Return Model
-      return Model(childSchema, defineChild);
+          childSchema = parentSchema.export(extendSchema),
+          // Define methods
+          methods = {},
+          virtuals = {},
+          statics = {};
+      // Inherit
+      return utils.inherit(parentSchema.Constructor, function(construct) {
+        // Use defineModel
+        return defineModel(construct, methods, virtuals, statics);
+        // Define prototype
+      }, function(proto, Constructor) {
+        // Override schema
+        proto.schema = new Model.Schema(Constructor, childSchema, parentSchema);
+        // Extend
+        return utils.extendConstructor(Constructor, methods, virtuals, statics);
+      });
     };
 
     // If define is a callback
@@ -168,35 +172,11 @@ window.Model = (function(window, undefined) {
       };
     }
 
-    // Get the prototype
-    var proto = Constructor.prototype;
-
-    /**
-     * Extend methods to prototype
-     */
-    utils.extend(proto, methods);
-
     // Initialize schema
-    proto.schema = new Model.Schema(Constructor, schema);
+    Constructor.prototype.schema = new Model.Schema(Constructor, schema);
 
-    /**
-     * Define virtuals
-     */
-    utils.forEach(virtuals, function(method, name) {
-      // Define
-      methods.define.apply(proto, [name, {
-        // Get only since virtuals are read-only
-        get: method
-      }]);
-    });
-
-    /**
-     * Extend statics to constructor
-     */
-    utils.extend(Constructor, statics);
-
-    // Return the constructor
-    return Constructor;
+    // Extend and return Constructor 
+    return utils.extendConstructor(Constructor, methods, virtuals, statics);
   };
 
   // Return Model

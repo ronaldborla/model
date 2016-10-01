@@ -217,6 +217,38 @@
   };
 
   /**
+   * Extend constructor
+   */
+  utils.extendConstructor = function(Constructor, methods, virtuals, statics) {
+    // The prototype
+    var proto = Constructor.prototype;
+    // Initialize
+    methods = methods || {};
+    virtuals = virtuals || {};
+    statics = statics || {};
+    /**
+     * Extend methods to prototype
+     */
+    utils.extend(proto, methods);
+    /**
+     * Define virtuals
+     */
+    utils.forEach(virtuals, function(method, name) {
+      // Define
+      utils.define.apply(proto, [name, {
+        // Get only since virtuals are read-only
+        get: method
+      }]);
+    });
+    /**
+     * Extend statics to constructor
+     */
+    utils.extend(Constructor, statics);
+    // Return Constructor
+    return Constructor;
+  };
+
+  /**
    * Check if has sign
    */
   utils.hasSign = function(self) {

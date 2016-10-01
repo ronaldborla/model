@@ -73,7 +73,7 @@ window.Model = (function(window, undefined) {
       // Create
       attributes[name] = key.evaluate(value, this);
       // If result is an object
-      if (typeof attributes[name] === 'object') {
+      if (attributes[name] && typeof attributes[name] === 'object') {
         // Set its parent
         utils.$(attributes[name]).parent = this;
       }
@@ -139,18 +139,22 @@ window.Model = (function(window, undefined) {
       // Parent schema
       var parentSchema = this.prototype.schema,
           // The child schema
-          childSchema = parentSchema.export(extendSchema);
-      // Define child
-      var defineChild = function(construct, methods, virtuals, statics) {
-        // Execute defineModel
-        return defineModel(function(self, args) {
-          // Apply parent's constructor
-          parentSchema.Constructor.apply(self, args);
-          // Pass native construct method to 5th param
-        }, methods, virtuals, statics, construct);
-      };
-      // Return Model
-      return Model(childSchema, defineChild);
+          childSchema = parentSchema.export(extendSchema),
+          // Define methods
+          methods = {},
+          virtuals = {},
+          statics = {};
+      // Inherit
+      return utils.inherit(parentSchema.Constructor, function(construct) {
+        // Use defineModel
+        return defineModel(construct, methods, virtuals, statics);
+        // Define prototype
+      }, function(proto, Constructor) {
+        // Override schema
+        proto.schema = new Model.Schema(Constructor, childSchema, parentSchema);
+        // Extend
+        return utils.extendConstructor(Constructor, methods, virtuals, statics);
+      });
     };
 
     // If define is a callback
@@ -168,35 +172,11 @@ window.Model = (function(window, undefined) {
       };
     }
 
-    // Get the prototype
-    var proto = Constructor.prototype;
-
-    /**
-     * Extend methods to prototype
-     */
-    utils.extend(proto, methods);
-
     // Initialize schema
-    proto.schema = new Model.Schema(Constructor, schema);
+    Constructor.prototype.schema = new Model.Schema(Constructor, schema);
 
-    /**
-     * Define virtuals
-     */
-    utils.forEach(virtuals, function(method, name) {
-      // Define
-      methods.define.apply(proto, [name, {
-        // Get only since virtuals are read-only
-        get: method
-      }]);
-    });
-
-    /**
-     * Extend statics to constructor
-     */
-    utils.extend(Constructor, statics);
-
-    // Return the constructor
-    return Constructor;
+    // Extend and return Constructor 
+    return utils.extendConstructor(Constructor, methods, virtuals, statics);
   };
 
   // Return Model
@@ -420,6 +400,38 @@ window.Model = (function(window, undefined) {
       definePrototype(Constructor.prototype, Constructor);
     }
     // Return constructor
+    return Constructor;
+  };
+
+  /**
+   * Extend constructor
+   */
+  utils.extendConstructor = function(Constructor, methods, virtuals, statics) {
+    // The prototype
+    var proto = Constructor.prototype;
+    // Initialize
+    methods = methods || {};
+    virtuals = virtuals || {};
+    statics = statics || {};
+    /**
+     * Extend methods to prototype
+     */
+    utils.extend(proto, methods);
+    /**
+     * Define virtuals
+     */
+    utils.forEach(virtuals, function(method, name) {
+      // Define
+      utils.define.apply(proto, [name, {
+        // Get only since virtuals are read-only
+        get: method
+      }]);
+    });
+    /**
+     * Extend statics to constructor
+     */
+    utils.extend(Constructor, statics);
+    // Return Constructor
     return Constructor;
   };
 
@@ -660,8 +672,8 @@ window.Model = (function(window, undefined) {
     /**
      * Constructor is a collection
      */
-    Constructor.isCollection = true;
-
+    statics.isCollection = true;
+    
     // Unlike in a Model, we don't want to execute Array's default constructor
     return utils.inherit(window.Array, function() {
       // Return Constructor
@@ -758,27 +770,8 @@ window.Model = (function(window, undefined) {
         }));
       };
 
-      /**
-       * Extend methods to prototype
-       */
-      utils.extend(proto, methods);
-
-      /**
-       * Define virtuals
-       */
-      utils.forEach(virtuals, function(method, name) {
-        // Define
-        methods.define.apply(proto, [name, {
-          // Get only since virtuals are read-only
-          get: method
-        }]);
-      });
-
-      /**
-       * Extend statics to constructor
-       */
-      utils.extend(Collection, statics);
-
+      // Extend Constructor
+      return utils.extendConstructor(Collection, methods, virtuals, statics);
     });
   };
 
@@ -840,12 +833,14 @@ window.Model = (function(window, undefined) {
    */
   var Schema = utils.inherit(window.Array, function(construct) {
     // Return Constructor
-    return function Schema(Constructor, schema) {
+    return function Schema(Constructor, schema, parent) {
       // Self
       var self = construct(this);
 
       // This Constructor
       this.Constructor = Constructor;
+      // Parent schema
+      this.parent = parent || null;
 
       // If there's schema
       if (utils.isDefined(schema)) {
@@ -1432,8 +1427,10 @@ window.Model = (function(window, undefined) {
     this.name = name;
     // Set type
     this.type = Model.Schema.Types.Any;
-    // Se default
+    // Set default
     this.default = definition.default;
+    // Set nullable true by default
+    this.null = utils.is('Boolean', definition.null) ? definition.null : true;
 
     // The translated
     var type = definition.type || definition;
@@ -1491,7 +1488,7 @@ window.Model = (function(window, undefined) {
     var proto = schema.Constructor.prototype;
 
     // Define property for Model
-    proto.define.apply(proto, [name, {
+    utils.define.apply(proto, [name, {
       // Get the property
       get: function() {
         // Use get
@@ -1517,6 +1514,16 @@ window.Model = (function(window, undefined) {
         defined = utils.isDefined(current),
         // Result
         result = current;
+    // Check if null
+    if (value === null) {
+      // If nullable
+      if (!!this.null) {
+        // Return
+        return null;
+      }
+      // Throw error
+      this.throw('`' + this.name + '` cannot be null', model);
+    }
     // Select Type
     switch (this.type.name) {
       // Model
@@ -1639,7 +1646,7 @@ window.Model = (function(window, undefined) {
           // If not valid enum
           if (!this.isValidEnum(defaultValue)) {
             // Throw
-            this.throw('Invalid enum default value: ' + this.default);
+            this.throw('Invalid enum default value: ' + defaultValue);
           }
         }
         break;

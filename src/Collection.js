@@ -76,8 +76,8 @@
     /**
      * Constructor is a collection
      */
-    Constructor.isCollection = true;
-
+    statics.isCollection = true;
+    
     // Unlike in a Model, we don't want to execute Array's default constructor
     return utils.inherit(window.Array, function() {
       // Return Constructor
@@ -174,27 +174,8 @@
         }));
       };
 
-      /**
-       * Extend methods to prototype
-       */
-      utils.extend(proto, methods);
-
-      /**
-       * Define virtuals
-       */
-      utils.forEach(virtuals, function(method, name) {
-        // Define
-        methods.define.apply(proto, [name, {
-          // Get only since virtuals are read-only
-          get: method
-        }]);
-      });
-
-      /**
-       * Extend statics to constructor
-       */
-      utils.extend(Collection, statics);
-
+      // Extend Constructor
+      return utils.extendConstructor(Collection, methods, virtuals, statics);
     });
   };
 

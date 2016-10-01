@@ -26,8 +26,10 @@
     this.name = name;
     // Set type
     this.type = Model.Schema.Types.Any;
-    // Se default
+    // Set default
     this.default = definition.default;
+    // Set nullable true by default
+    this.null = utils.is('Boolean', definition.null) ? definition.null : true;
 
     // The translated
     var type = definition.type || definition;
@@ -85,7 +87,7 @@
     var proto = schema.Constructor.prototype;
 
     // Define property for Model
-    proto.define.apply(proto, [name, {
+    utils.define.apply(proto, [name, {
       // Get the property
       get: function() {
         // Use get
@@ -111,6 +113,16 @@
         defined = utils.isDefined(current),
         // Result
         result = current;
+    // Check if null
+    if (value === null) {
+      // If nullable
+      if (!!this.null) {
+        // Return
+        return null;
+      }
+      // Throw error
+      this.throw('`' + this.name + '` cannot be null', model);
+    }
     // Select Type
     switch (this.type.name) {
       // Model
@@ -233,7 +245,7 @@
           // If not valid enum
           if (!this.isValidEnum(defaultValue)) {
             // Throw
-            this.throw('Invalid enum default value: ' + this.default);
+            this.throw('Invalid enum default value: ' + defaultValue);
           }
         }
         break;
