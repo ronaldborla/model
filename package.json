@@ -2,7 +2,7 @@
   "name": "ronaldborla/model",
   "description": "Stand-alone Javascript Model",
   "author": "Ronald Borla",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "devDependencies": {
     "grunt": "^1.0.1",
     "grunt-cli": "^1.2.0",
