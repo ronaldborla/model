@@ -41,7 +41,7 @@
    */
   Types.Array.is = function(value) {
     // Return
-    return value && (value.constructor === window.Array);
+    return value && ((value.constructor === window.Array) || (value instanceof window.Array));
   };
   
   // Inject

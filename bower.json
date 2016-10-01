@@ -1,7 +1,7 @@
 {
   "name": "modeljs",
   "description": "Stand-alone Javascript Model",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "main": "dist/model.js",
   "authors": [
     "Ronald Borla"
