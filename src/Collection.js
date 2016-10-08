@@ -174,6 +174,25 @@
         }));
       };
 
+      /**
+       * To object
+       */
+      proto.toObject = function(exclude) {
+        // Map
+        return this.map(function(item) {
+          // Return object
+          return item.toObject(exclude);
+        });
+      };
+
+      /**
+       * To json
+       */
+      proto.toJson = function(exclude, replacer, space) {
+        // Return stringified
+        return JSON.stringify(this.toObject(exclude), replacer, space);
+      };
+
       // Extend Constructor
       return utils.extendConstructor(Collection, methods, virtuals, statics);
     });

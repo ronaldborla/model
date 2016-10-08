@@ -14,7 +14,7 @@
    */
   Types.Date.is = function(value) {
     // Return
-    return value && (value.constructor === window.Date);
+    return value && ((value.constructor === window.Date) || (value instanceof window.Date));
   };
   
   // Inject

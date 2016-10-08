@@ -189,6 +189,65 @@
   };
 
   /**
+   * Array of strings to object
+   */
+  utils.arrayOfStringsToObject = function(strings) {
+    // The object
+    var object = {};
+    // If array
+    if (utils.is('Array', strings)) {
+      // Loop
+      strings.forEach(function(string) {
+        // Split
+        var arr = string.split('.'),
+            name = arr[0],
+            child = (arr.length > 1) ? arr.splice(1).join('.') : '';
+        // If not yet defined
+        if (utils.isUndefined(object[name])) {
+          // Create array
+          object[name] = [];
+        }
+        // If there's child
+        if (child && object[name] !== true) {
+          // Push
+          object[name].push(child);
+        } else {
+          // Set as true
+          object[name] = true;
+        }
+      });
+    }
+    // Loop through keys
+    utils.keys(object).forEach(function(key) {
+      // If array
+      if (utils.is('Array', object[key])) {
+        // Convert
+        object[key] = utils.arrayOfStringsToObject(object[key]);
+      }
+    });
+    // Return
+    return object;
+  };
+
+  /**
+   * Remove __local__
+   */
+  utils.cleanObject = function(dirty) {
+    // New object
+    var object = {};
+    // Loop through
+    utils.forEach(dirty, function(value, key) {
+      // If not local
+      if (key !== utils.sign) {
+        // Set it
+        object[key] = value;
+      }
+    });
+    // Return
+    return object;
+  };
+
+  /**
    * Inherit a Constructor
    */
   utils.inherit = function(Parent, getConstructor, definePrototype) {

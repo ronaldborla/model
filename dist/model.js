@@ -128,6 +128,74 @@ window.Model = (function(window, undefined) {
     };
 
     /**
+     * To object
+     */
+    methods.toObject = function(exclude) {
+      // The object
+      var self = this,
+          object = {};
+      // If defined
+      if (utils.isDefined(exclude)) {
+        // If string
+        if (utils.is('String', exclude)) {
+          // Put in array
+          exclude = [exclude];
+        }
+        // If array
+        if (utils.is('Array', exclude)) {
+          // Convert
+          exclude = utils.arrayOfStringsToObject(exclude);
+        }
+      } else {
+        // Default to object
+        exclude = {};
+      }
+      // If exclude is not object
+      if (!utils.is('Object', exclude)) {
+        // Error
+        this.throw('`exclude` must be an object or an array of strings');
+      }
+      // Register value
+      var registerValue = function(key) {
+        // Key name
+        var keyName = key.name || key;
+        // Must not be excluded
+        if (exclude[keyName] !== true) {
+          // Get value
+          var value = self[keyName],
+              hasToObject = value && utils.isFunction(value.toObject);
+          // If no toObject but object
+          if (!hasToObject && utils.is('Object', value)) {
+            // If date
+            if (utils.is('Date', value)) {
+              // Convert to string
+              value = value.toString();
+            } else {
+              // Clean
+              value = utils.cleanObject(value);
+            }
+          }
+          // Set it
+          object[keyName] = hasToObject ? value.toObject(exclude[keyName]) : value;
+        }
+      };
+      // Loop through schema
+      this.schema.forEach(registerValue);
+      // Loop through virtuals
+      this.schema.virtuals.forEach(registerValue);
+      // Return
+      return object;
+    };
+
+    /**
+     * To json
+     */
+    methods.toJson = function(exclude, replacer, space) {
+      // Return stringified
+      return JSON.stringify(this.toObject(exclude), replacer, space);
+    };
+
+    /**
      * Constructor is a Model
      */
     statics.isModel = true;
@@ -151,7 +219,7 @@ window.Model = (function(window, undefined) {
         // Define prototype
       }, function(proto, Constructor) {
         // Override schema
-        proto.schema = new Model.Schema(Constructor, childSchema, parentSchema);
+        proto.schema = new Model.Schema(Constructor, childSchema, parentSchema, utils.keys(virtuals || {}));
         // Extend
         return utils.extendConstructor(Constructor, methods, virtuals, statics);
       });
@@ -173,7 +241,7 @@ window.Model = (function(window, undefined) {
     }
 
     // Initialize schema
-    Constructor.prototype.schema = new Model.Schema(Constructor, schema);
+    Constructor.prototype.schema = new Model.Schema(Constructor, schema, null, utils.keys(virtuals || {}));
 
     // Extend and return Constructor 
     return utils.extendConstructor(Constructor, methods, virtuals, statics);
@@ -373,6 +441,65 @@ window.Model = (function(window, undefined) {
   utils.ucfirst = function(string) {
     // Return
     return string[0].toUpperCase() + string.substr(1);
+  };
+
+  /**
+   * Array of strings to object
+   */
+  utils.arrayOfStringsToObject = function(strings) {
+    // The object
+    var object = {};
+    // If array
+    if (utils.is('Array', strings)) {
+      // Loop
+      strings.forEach(function(string) {
+        // Split
+        var arr = string.split('.'),
+            name = arr[0],
+            child = (arr.length > 1) ? arr.splice(1).join('.') : '';
+        // If not yet defined
+        if (utils.isUndefined(object[name])) {
+          // Create array
+          object[name] = [];
+        }
+        // If there's child
+        if (child && object[name] !== true) {
+          // Push
+          object[name].push(child);
+        } else {
+          // Set as true
+          object[name] = true;
+        }
+      });
+    }
+    // Loop through keys
+    utils.keys(object).forEach(function(key) {
+      // If array
+      if (utils.is('Array', object[key])) {
+        // Convert
+        object[key] = utils.arrayOfStringsToObject(object[key]);
+      }
+    });
+    // Return
+    return object;
+  };
+
+  /**
+   * Remove __local__
+   */
+  utils.cleanObject = function(dirty) {
+    // New object
+    var object = {};
+    // Loop through
+    utils.forEach(dirty, function(value, key) {
+      // If not local
+      if (key !== utils.sign) {
+        // Set it
+        object[key] = value;
+      }
+    });
+    // Return
+    return object;
   };
 
   /**
@@ -770,6 +897,25 @@ window.Model = (function(window, undefined) {
         }));
       };
 
+      /**
+       * To object
+       */
+      proto.toObject = function(exclude) {
+        // Map
+        return this.map(function(item) {
+          // Return object
+          return item.toObject(exclude);
+        });
+      };
+
+      /**
+       * To json
+       */
+      proto.toJson = function(exclude, replacer, space) {
+        // Return stringified
+        return JSON.stringify(this.toObject(exclude), replacer, space);
+      };
+
       // Extend Constructor
       return utils.extendConstructor(Collection, methods, virtuals, statics);
     });
@@ -833,7 +979,7 @@ window.Model = (function(window, undefined) {
    */
   var Schema = utils.inherit(window.Array, function(construct) {
     // Return Constructor
-    return function Schema(Constructor, schema, parent) {
+    return function Schema(Constructor, schema, parent, virtuals) {
       // Self
       var self = construct(this);
 
@@ -841,6 +987,20 @@ window.Model = (function(window, undefined) {
       this.Constructor = Constructor;
       // Parent schema
       this.parent = parent || null;
+      // The virtuals
+      this.virtuals = virtuals || [];
+
+      // If there's parent
+      if (this.parent) {
+        // Inherit virtuals
+        this.parent.virtuals.forEach(function(virtual) {
+          // Add if not exists
+          if (self.virtuals.indexOf(virtual) < 0) {
+            // Push
+            self.virtuals.push(virtual);
+          }
+        });
+      }
 
       // If there's schema
       if (utils.isDefined(schema)) {
@@ -1193,7 +1353,7 @@ window.Model = (function(window, undefined) {
    */
   Types.Date.is = function(value) {
     // Return
-    return value && (value.constructor === window.Date);
+    return value && ((value.constructor === window.Date) || (value instanceof window.Date));
   };
   
   // Inject

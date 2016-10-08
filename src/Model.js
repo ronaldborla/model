@@ -128,6 +128,74 @@ window.Model = (function(window, undefined) {
     };
 
     /**
+     * To object
+     */
+    methods.toObject = function(exclude) {
+      // The object
+      var self = this,
+          object = {};
+      // If defined
+      if (utils.isDefined(exclude)) {
+        // If string
+        if (utils.is('String', exclude)) {
+          // Put in array
+          exclude = [exclude];
+        }
+        // If array
+        if (utils.is('Array', exclude)) {
+          // Convert
+          exclude = utils.arrayOfStringsToObject(exclude);
+        }
+      } else {
+        // Default to object
+        exclude = {};
+      }
+      // If exclude is not object
+      if (!utils.is('Object', exclude)) {
+        // Error
+        this.throw('`exclude` must be an object or an array of strings');
+      }
+      // Register value
+      var registerValue = function(key) {
+        // Key name
+        var keyName = key.name || key;
+        // Must not be excluded
+        if (exclude[keyName] !== true) {
+          // Get value
+          var value = self[keyName],
+              hasToObject = value && utils.isFunction(value.toObject);
+          // If no toObject but object
+          if (!hasToObject && utils.is('Object', value)) {
+            // If date
+            if (utils.is('Date', value)) {
+              // Convert to string
+              value = value.toString();
+            } else {
+              // Clean
+              value = utils.cleanObject(value);
+            }
+          }
+          // Set it
+          object[keyName] = hasToObject ? value.toObject(exclude[keyName]) : value;
+        }
+      };
+      // Loop through schema
+      this.schema.forEach(registerValue);
+      // Loop through virtuals
+      this.schema.virtuals.forEach(registerValue);
+      // Return
+      return object;
+    };
+
+    /**
+     * To json
+     */
+    methods.toJson = function(exclude, replacer, space) {
+      // Return stringified
+      return JSON.stringify(this.toObject(exclude), replacer, space);
+    };
+
+    /**
      * Constructor is a Model
      */
     statics.isModel = true;
@@ -151,7 +219,7 @@ window.Model = (function(window, undefined) {
         // Define prototype
       }, function(proto, Constructor) {
         // Override schema
-        proto.schema = new Model.Schema(Constructor, childSchema, parentSchema);
+        proto.schema = new Model.Schema(Constructor, childSchema, parentSchema, utils.keys(virtuals || {}));
         // Extend
         return utils.extendConstructor(Constructor, methods, virtuals, statics);
       });
@@ -173,7 +241,7 @@ window.Model = (function(window, undefined) {
     }
 
     // Initialize schema
-    Constructor.prototype.schema = new Model.Schema(Constructor, schema);
+    Constructor.prototype.schema = new Model.Schema(Constructor, schema, null, utils.keys(virtuals || {}));
 
     // Extend and return Constructor 
     return utils.extendConstructor(Constructor, methods, virtuals, statics);
