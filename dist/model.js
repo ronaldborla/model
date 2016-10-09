@@ -1671,7 +1671,7 @@ window.Model = (function(window, undefined) {
         // Current value
         current = hasModel ? model.get(this.name) : undefined,
         // Is defined
-        defined = utils.isDefined(current),
+        defined = utils.isDefined(current) && (current !== null),
         // Result
         result = current;
     // Check if null
