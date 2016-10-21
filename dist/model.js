@@ -53,11 +53,29 @@ window.Model = (function(window, undefined) {
     };
 
     /**
+     * Get
+     */
+    methods.getAttribute = function(name) {
+      // Get method
+      var method = utils.camelCase(['get', name, 'attribute'].join(' ')),
+          orig = attr(this)[name];
+      // If set
+      if (utils.isFunction(this[method])) {
+        // Use it
+        return this[method].apply(this, [name, orig]);
+        // Otherwise
+      } else {
+        // Return original
+        return orig;
+      }
+    };
+
+    /**
      * Get attribute
      */
     methods.get = function(name) {
       // Return attribute
-      return attr(this)[name];
+      return this.getAttribute(name);
     };
 
     /**
@@ -441,6 +459,16 @@ window.Model = (function(window, undefined) {
   utils.ucfirst = function(string) {
     // Return
     return string[0].toUpperCase() + string.substr(1);
+  };
+
+  /**
+   * To camel case
+   */
+  utils.camelCase = function(str) {
+    return str.replace(/[-_]+/g, ' ').replace(/(?:^\w|[A-Z]|\b\w|[\s-_]+)/g, function(match, index) {
+      if (+match === 0) return ""; // or if (/\s+/.test(match)) for white spaces
+      return index === 0 ? match.toLowerCase() : match.toUpperCase();
+    });
   };
 
   /**

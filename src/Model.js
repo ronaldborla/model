@@ -53,11 +53,29 @@ window.Model = (function(window, undefined) {
     };
 
     /**
+     * Get
+     */
+    methods.getAttribute = function(name) {
+      // Get method
+      var method = utils.camelCase(['get', name, 'attribute'].join(' ')),
+          orig = attr(this)[name];
+      // If set
+      if (utils.isFunction(this[method])) {
+        // Use it
+        return this[method].apply(this, [name, orig]);
+        // Otherwise
+      } else {
+        // Return original
+        return orig;
+      }
+    };
+
+    /**
      * Get attribute
      */
     methods.get = function(name) {
       // Return attribute
-      return attr(this)[name];
+      return this.getAttribute(name);
     };
 
     /**
