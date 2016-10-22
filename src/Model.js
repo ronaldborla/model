@@ -191,11 +191,6 @@ window.Model = (function(window, undefined) {
                       self[keyName],
               // If there's a toObject method
               hasToObject = value && utils.isFunction(value.toObject);
-
-          if (keyName === 'birthdate') {
-            console.log('---START HERE---');
-          }
-
           // If no toObject but object
           if (!hasToObject && utils.is('Object', value)) {
             // If date
