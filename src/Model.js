@@ -62,7 +62,7 @@ window.Model = (function(window, undefined) {
       // If set
       if (utils.isFunction(this[method])) {
         // Use it
-        return this[method].apply(this, [name, orig]);
+        return this[method].apply(this, [orig]);
         // Otherwise
       } else {
         // Return original
@@ -87,7 +87,7 @@ window.Model = (function(window, undefined) {
       // If method is set
       if (utils.isFunction(this[method])) {
         // Use it
-        attributes[name] = this[method].apply(this, [name, evaluated, previous]);
+        attributes[name] = this[method].apply(this, [evaluated, previous]);
       } else {
         // Set directly
         attributes[name] = evaluated;
