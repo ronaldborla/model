@@ -53,9 +53,9 @@ window.Model = (function(window, undefined) {
     };
 
     /**
-     * Get
+     * Get attribute
      */
-    methods.getAttribute = function(name) {
+    methods.get = function(name) {
       // Get method
       var method = utils.camelCase(['get', name, 'attribute'].join(' ')),
           orig = attr(this)[name];
@@ -71,14 +71,6 @@ window.Model = (function(window, undefined) {
     };
 
     /**
-     * Get attribute
-     */
-    methods.get = function(name) {
-      // Return attribute
-      return this.getAttribute(name);
-    };
-
-    /**
      * Set attribute
      */
     methods.set = function(name, value) {
@@ -87,9 +79,19 @@ window.Model = (function(window, undefined) {
           // This attributes
           attributes = attr(this),
           // Previous
-          previous = attributes[name];
-      // Create
-      attributes[name] = key.evaluate(value, this);
+          previous = attributes[name],
+          // Method
+          method = utils.camelCase(['set', name, 'attribute'].join(' ')),
+          // Evaluate
+          evaluated = key.evaluate(value, this);
+      // If method is set
+      if (utils.isFunction(this[method])) {
+        // Use it
+        attributes[name] = this[method].apply(this, [name, evaluated, previous]);
+      } else {
+        // Set directly
+        attributes[name] = evaluated;
+      }
       // If result is an object
       if (attributes[name] && typeof attributes[name] === 'object') {
         // Set its parent
@@ -98,7 +100,7 @@ window.Model = (function(window, undefined) {
       // Call set attribute
       this.fire('setAttribute', [name, attributes[name], previous]);
       // Set specific attribute
-      this.fire('set' + utils.ucfirst(name) + 'Attribute', [attributes[name], previous]);
+      this.fire(method, [attributes[name], previous]);
       // If changed
       if (utils.typeCompare(key.type, attributes[name], previous)) {
         // Change
