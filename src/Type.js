@@ -45,6 +45,12 @@
    * Check if a variable is a type or instance of constructor
    */
   Type.prototype.is = function(value) {
+    // If null
+    // This is to fix typeof null == 'object' (-_-)
+    if (value === null) {
+      // Return false
+      return false;
+    }
     // Get type
     var type = ((typeof value) || '').toLowerCase();
     // If object
