@@ -182,7 +182,14 @@ window.Model = (function(window, undefined) {
         // Must not be excluded
         if (exclude[keyName] !== true) {
           // Get value
-          var value = self[keyName],
+          var exportMethod = utils.camelCase(['export', keyName, 'attribute'].join(' ')),
+              // Check if there's an export method
+              value = utils.isFunction(self[exportMethod]) ?
+                      // Use the one defined in the method
+                      self[exportMethod].apply(self, [self[keyName]]) :
+                      // Use as is
+                      self[keyName],
+              // If there's a toObject method
               hasToObject = value && utils.isFunction(value.toObject);
           // If no toObject but object
           if (!hasToObject && utils.is('Object', value)) {
@@ -203,6 +210,8 @@ window.Model = (function(window, undefined) {
       this.schema.forEach(registerValue);
       // Loop through virtuals
       this.schema.virtuals.forEach(registerValue);
+      // Export callback
+      this.fire('export', [object, exclude]);
       // Return
       return object;
     };
