@@ -130,8 +130,15 @@ window.Model = (function(window, undefined) {
     methods.load = function(data) {
       // The object
       var self = this;
+      // If there's a transformData method
+      if (utils.isFunction(this.transformData)) {
+        // Use it
+        data = this.transformData(data);
+      }
       // If there's data
       if (utils.isDefined(data)) {
+        // Before load
+        this.fire('beforeload', [data]);
         // Loop through schema
         this.schema.forEach(function(key) {
           // If data is defined
