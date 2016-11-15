@@ -130,11 +130,8 @@ window.Model = (function(window, undefined) {
     methods.load = function(data) {
       // The object
       var self = this;
-      // If there's a transformData method
-      if (utils.isFunction(this.transformData)) {
-        // Use it
-        data = this.transformData(data);
-      }
+      // Call filter
+      data = this.filter('load', data);
       // If there's data
       if (utils.isDefined(data)) {
         // Before load
@@ -152,6 +149,14 @@ window.Model = (function(window, undefined) {
       }
       // Return self
       return this;
+    };
+
+    /**
+     * Filter
+     */
+    methods.filter = function(name, data) {
+      // Return data
+      return data;
     };
 
     /**
@@ -217,6 +222,8 @@ window.Model = (function(window, undefined) {
       this.schema.forEach(registerValue);
       // Loop through virtuals
       this.schema.virtuals.forEach(registerValue);
+      // Call filter
+      object = this.filter('export', object);
       // Export callback
       this.fire('export', [object, exclude]);
       // Return
