@@ -256,7 +256,7 @@ window.Model = (function(window, undefined) {
           methods = {},
           virtuals = {},
           statics = {},
-          options = {};
+          options = parentSchema.options || {};
       // Inherit
       return utils.inherit(parentSchema.Constructor, function(construct) {
         // Use defineModel
