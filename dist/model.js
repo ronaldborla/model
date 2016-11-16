@@ -261,7 +261,7 @@ window.Model = (function(window, undefined) {
           methods = {},
           virtuals = {},
           statics = {},
-          options = parentSchema.options || {};
+          options = utils.clone(parentSchema.options || {});
       // Inherit
       return utils.inherit(parentSchema.Constructor, function(construct) {
         // Use defineModel
@@ -478,6 +478,14 @@ window.Model = (function(window, undefined) {
     }
     // True to signify loop completed
     return true;
+  };
+
+  /**
+   * Clone an object
+   */
+  utils.clone = function(object) {
+    // Return
+    return JSON.parse(JSON.stringify(object));
   };
 
   /**

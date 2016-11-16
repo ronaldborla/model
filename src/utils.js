@@ -168,6 +168,14 @@
   };
 
   /**
+   * Clone an object
+   */
+  utils.clone = function(object) {
+    // Return
+    return JSON.parse(JSON.stringify(object));
+  };
+
+  /**
    * Extend object
    */
   utils.extend = function(left, right) {
