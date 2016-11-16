@@ -18,6 +18,7 @@ window.Model = (function(window, undefined) {
         methods = {},
         virtuals = {},
         statics = {},
+        options = {},
         utils = Model.utils;
 
     // Set $
@@ -254,15 +255,20 @@ window.Model = (function(window, undefined) {
           // Define methods
           methods = {},
           virtuals = {},
-          statics = {};
+          statics = {},
+          options = {};
       // Inherit
       return utils.inherit(parentSchema.Constructor, function(construct) {
         // Use defineModel
-        return defineModel(construct, methods, virtuals, statics);
+        return defineModel(construct, methods, virtuals, statics, options);
         // Define prototype
       }, function(proto, Constructor) {
         // Override schema
-        proto.schema = new Model.Schema(Constructor, childSchema, parentSchema, utils.keys(virtuals || {}));
+        proto.schema = new Model.Schema(Constructor, 
+                                        childSchema, 
+                                        parentSchema, 
+                                        utils.keys(virtuals || {}),
+                                        options);
         // Extend
         return utils.extendConstructor(Constructor, methods, virtuals, statics);
       });
@@ -271,7 +277,7 @@ window.Model = (function(window, undefined) {
     // If define is a callback
     if (utils.isFunction(define)) {
       // Call define and get the constructor
-      Constructor = define(construct, methods, virtuals, statics);
+      Constructor = define(construct, methods, virtuals, statics, options);
     }
 
     // If Constructor is not a function
@@ -284,7 +290,11 @@ window.Model = (function(window, undefined) {
     }
 
     // Initialize schema
-    Constructor.prototype.schema = new Model.Schema(Constructor, schema, null, utils.keys(virtuals || {}));
+    Constructor.prototype.schema = new Model.Schema(Constructor, 
+                                                    schema, 
+                                                    null, 
+                                                    utils.keys(virtuals || {}),
+                                                    options);
 
     // Extend and return Constructor 
     return utils.extendConstructor(Constructor, methods, virtuals, statics);

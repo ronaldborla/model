@@ -11,7 +11,7 @@
    */
   var Schema = utils.inherit(window.Array, function(construct) {
     // Return Constructor
-    return function Schema(Constructor, schema, parent, virtuals) {
+    return function Schema(Constructor, schema, parent, virtuals, options) {
       // Self
       var self = construct(this);
 
@@ -21,6 +21,8 @@
       this.parent = parent || null;
       // The virtuals
       this.virtuals = virtuals || [];
+      // The options
+      this.options = options || {};
 
       // If there's parent
       if (this.parent) {
