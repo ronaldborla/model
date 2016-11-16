@@ -221,8 +221,13 @@ window.Model = (function(window, undefined) {
       };
       // Loop through schema
       this.schema.forEach(registerValue);
-      // Loop through virtuals
-      this.schema.virtuals.forEach(registerValue);
+      // If there's virtuals in export
+      if (this.schema.options &&
+          this.schema.options.export &&
+          !!this.schema.options.export.virtuals) {
+        // Loop through virtuals
+        this.schema.virtuals.forEach(registerValue);
+      }
       // Call filter
       object = this.filter('export', object);
       // Export callback
