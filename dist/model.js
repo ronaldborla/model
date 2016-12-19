@@ -1776,15 +1776,14 @@ window.Model = (function(window, undefined) {
       case Model.Schema.Types.Collection.name:
       // Or self
       case Model.Schema.Types.Self.name:
-        // If defined
-        if (defined) {
-          // Load
-          current.load(value);
           // If value is instance of the given constructor
-        } else if (value instanceof this.type.Constructor) {
+        if (value instanceof this.type.Constructor) {
           // Just replace
           result = value;
-          // Otherwise
+          // Otherwise if defined
+        } else if (defined) {
+          // Load
+          current.load(value);
         } else {
           // Create new 
           result = new this.type.Constructor(value);
