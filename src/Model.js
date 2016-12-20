@@ -204,8 +204,10 @@ window.Model = (function(window, undefined) {
                       self[keyName],
               // If there's a toObject method
               hasToObject = value && utils.isFunction(value.toObject);
-          // If no toObject but object
-          if (!hasToObject && utils.is('Object', value)) {
+          // If no toObject but object and not array
+          if (!hasToObject && 
+              utils.is('Object', value) &&
+              !utils.is('Array', value)) {
             // If date
             if (utils.is('Date', value)) {
               // Convert to string
