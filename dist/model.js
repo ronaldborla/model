@@ -761,7 +761,7 @@ window.Model = (function(window, undefined) {
     // We're firing events up to the root parent
     while (true) {
       // Fire event
-      parent.fire(event, [args]);
+      parent.fire(event, args);
       // If there's parent and the parent has a fire event
       if (utils.isDefined(utils.$(parent).parent) && utils.isFunction(utils.$(parent).parent.fire)) {
         // Set new parent
