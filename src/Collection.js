@@ -94,6 +94,8 @@
        * Convert item to Model
        */
       proto.convert = function(item) {
+        // Filter convert
+        item = this.filter('convert', item);
         // If not an instance of Constructor
         if (!(item instanceof this.Model)) {
           // Create
@@ -115,6 +117,14 @@
         this.push.apply(this, items);
         // Return self
         return this;
+      };
+
+      /**
+       * Filter
+       */
+      proto.filter = function(name, data) {
+        // Return data
+        return data;
       };
 
       /**
