@@ -23,6 +23,8 @@
       this.virtuals = virtuals || [];
       // The options
       this.options = options || {};
+      // Create index
+      this.index = {};
 
       // If there's parent
       if (this.parent) {
@@ -52,32 +54,22 @@
      * Get schema
      */
     proto.get = function(name) {
-      // Set index
-      var index = -1;
-      // Check for index
-      if (!utils.isDefined(this.index)) {
-        // Set index
-        this.index = {};
-      }
       // If index is defined
       if (utils.isDefined(this.index[name])) {
-        // Set index
-        index = this.index[name];
+        // Return immediately
+        return this[this.index[name]];
       }
-      // If there's no index
-      if (index <= 0) {
-        // Find
-        for (var i = 0; i < this.length; i++) {
-          // Match name
-          if (this[i].name === name) {
-            // Put into index
-            this.index[name] = index = i;
-            break;
-          }
+      // Find
+      for (var i = 0; i < this.length; i++) {
+        // Match name
+        if (this[i].name === name) {
+          // Put into index
+          this.index[name] = i;
+          break;
         }
       }
       // Return key
-      return this[index];
+      return this[this.index[name]];
     };
 
     /**
@@ -85,8 +77,12 @@
      * Translate from raw schema
      */
     proto.set = function(name, definition) {
+      // Create key
+      var key = new Schema.Key(this, name, definition);
+      // Add to index immediately
+      this.index[key.name] = this.length;
       // Push translated
-      this.push(new Schema.Key(this, name, definition));
+      this.push(key);
     };
 
     /**
