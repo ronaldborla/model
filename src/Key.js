@@ -1,39 +1,43 @@
-
 /**
  * Define Key
  */
 (function(window, Model, utils, undefined) {
   'use strict';
 
-  /**
-   * Key attributes
-   */
-  var keyAttributes = ['enum'];
+  var keyAttributes = ['enum'],
+      typesKeys = window.Object.keys(Model.Schema.Types);
+
+  // Set Key
+  Model.Schema.Key = Key;
+
+  Key.prototype.evaluate    = evaluateKey;
+  Key.prototype.export      = exportKey;
+  Key.prototype.filter      = filterDefinition;
+  Key.prototype.getDefault  = getDefault;
+  Key.prototype.hasDefault  = hasDefault;
+  Key.prototype.isValidEnum = isValidEnum;
+  Key.prototype.throw       = throwException;
+
+  ////////
 
   /**
    * Schema Key
    */
-  var Key = function(schema, name, definition) {
-    // Self
-    var self = this;
-
+  function Key(schema, name, definition) {
     // Set definition
     definition = definition || {};
 
-    // Set schema
-    this.schema = schema;
-    // Set name
-    this.name = name;
-    // Set type
-    this.type = Model.Schema.Types.Any;
-    // Set default
-    this.default = definition.default;
-    // Set nullable true by default
-    this.null = utils.is('Boolean', definition.null) ? definition.null : true;
+    var i     = 0,
+        l     = 0,
+        proto = schema.Constructor.prototype,
+        type  = definition.type || definition;
 
-    // The translated
-    var type = definition.type || definition;
-    
+    this.schema   = schema;
+    this.name     = name;
+    this.type     = Model.Schema.Types.Any;
+    this.default  = definition.default;
+    this.null     = utils.is('Boolean', definition.null) ? definition.null : true;
+
     // If type is a string
     if (utils.is('String', type)) {
       // Get from Types
@@ -45,99 +49,75 @@
       // If type is self
       if (type.match('Self')) {
         // Create new based on self
-        this.type = new Model.Schema.Type(type.name, this.schema.Constructor);
-        // Set original
-        this.type.original = type;
-        // Otherwise
+        this.type           = new Model.Schema.Type(type.name, this.schema.Constructor);
+        this.type.original  = type;
       } else {
         // Set as the Type
         this.type = type;
       }
-      // Otherwise
     } else {
-      // Loop through types
-      utils.forEach(Model.Schema.Types, function(propType) {
+      i = l = typesKeys.length;
+      while (i--) {
+        var propType = Model.Schema.Types[typesKeys[l - i - 1]];
         // If native
         if (propType.native && propType.match(type)) {
           // Just set
-          self.type = propType;
-          // Return false
-          return false;
+          this.type = propType;
           // If model or collection
         } else if ((propType.match(Model.Schema.Types.Model)       && utils.inherits('Model', type)) ||
                    (propType.match(Model.Schema.Types.Collection)  && utils.inherits('Collection', type))) {
           // Create new type
-          self.type = new Model.Schema.Type(propType.name, type);
-          // Return false
-          return false;
+          this.type = new Model.Schema.Type(propType.name, type);
         }
-      });
+      }
     }
 
-    // Keep other attributes
-    keyAttributes.forEach(function(attribute) {
+    i = l = keyAttributes.length;
+    while (i--) {
       // If defined
-      if (utils.isDefined(definition[attribute])) {
-        // Set it
-        self.filter(attribute, definition[attribute]);
+      if (utils.isDefined(definition[keyAttributes[l - i - 1]])) {
+        this.filter(keyAttributes[l - i - 1], definition[keyAttributes[l - i - 1]]);
       }
-    });
-
-    // The schema Constructor's prototype
-    var proto = schema.Constructor.prototype;
+    }
 
     // Define property for Model
     utils.define.apply(proto, [name, {
-      // Get the property
       get: function() {
-        // Use get
         return proto.get.apply(this, [name]);
       },
-      // Set the property
       set: function(value) {
-        // Use set
         proto.set.apply(this, [name, value]);
       }
     }]);
-  };
+  }
 
   /**
    * Evaluate
    */
-  Key.prototype.evaluate = function(value, model) {
+  function evaluateKey(value, model) {
     // Has model
-    var hasModel = utils.isDefined(model),
-        // Current value
-        current = hasModel ? model.get(this.name) : undefined,
-        // Is defined
-        defined = utils.isDefined(current) && (current !== null),
-        // Result
-        result = current;
+    var hasModel  = utils.isDefined(model),
+        current   = hasModel ? model.get(this.name) : undefined,
+        defined   = utils.isDefined(current) && (current !== null),
+        result    = current;
     // Check if null
     if (value === null) {
       // If nullable
       if (!!this.null) {
-        // Return
         return null;
       }
-      // Throw error
       this.throw('`' + this.name + '` cannot be null', model);
     }
     // Select Type
     switch (this.type.name) {
-      // Model
       case Model.Schema.Types.Model.name:
-      // Collection
       case Model.Schema.Types.Collection.name:
-      // Or self
       case Model.Schema.Types.Self.name:
           // If value is instance of the given constructor
         if (value instanceof this.type.Constructor) {
           // Just replace
           result = value;
-          // Otherwise if defined
         } else if (defined) {
-          // Load
           current.load(value);
         } else {
           // Create new 
@@ -146,146 +126,120 @@
         break;
       // If date
       case Model.Schema.Types.Date.name:
-        // Initialize
         result = new this.type.Constructor(value || null);
         break;
       // Array
       case Model.Schema.Types.Array.name:
         // Set value
         value = utils.is('Array', value) ? value : (utils.isDefined(value) ? [value] : []);
-        // If defined
         if (defined) {
-          // Empty first
           current.length = 0;
-          // Push
           current.push.apply(current, value);
-          // Otherwise
         } else {
-          // Set it
           result = value;
         }
         break;
       // Any
       case Model.Schema.Types.Any.name:
-        // Set normally
         result = value;
         break;
-      // Else
       default:
         // If string and there's enum
         if (this.type.match(Model.Schema.Types.String) && utils.is('Array', this.enum)) {
-          // If not valid enum
           if (!this.isValidEnum(value)) {
-            // Throw error
             this.throw('Invalid enum value: ' + value, model);
           }
         }
-        // Set normally
         result = utils.isDefined(value) ? this.type.Constructor(value) : this.type.Constructor();
         break;
     }
-    // Return result
     return result;
-  };
+  }
 
   /**
-   * Has default
+   * Export key
    */
-  Key.prototype.hasDefault = function() {
-    // Return
-    return utils.isDefined(this.default);
-  };
-
-  /**
-   * Get default value
-   */
-  Key.prototype.getDefault = function(model) {
-    // Execute if method
-    return utils.isFunction(this.default) ? 
-           // Call method
-           this.default.apply(this, utils.isDefined(model) ? [model] : []) :
-           // Return as is
-           this.default;
-  };
-
-  /**
-   * Enum
-   */
-  Key.prototype.isValidEnum = function(value) {
-    // Return
-    return this.enum.indexOf(value) >= 0;
-  };
+  function exportKey() {
+    // Json
+    var l = keyAttributes.length,
+        i = l, 
+        self = this;
+    var json = {
+      type: this.type.original || this.type
+    };
+    // If there's default
+    if (this.hasDefault()) {
+      json.default = this.default;
+    }
+    while (i--) {
+      // If set
+      if (utils.isDefined(self[keyAttributes[l - i - 1]])) {
+        json[keyAttributes[l - i - 1]] = self[keyAttributes[l - i - 1]];
+      }
+    }
+    return json;
+  }
 
   /**
    * Filter definition
    */
-  Key.prototype.filter = function(attribute, value) {
+  function filterDefinition(attribute, value) {
     // Select
     switch (attribute) {
       // Enum
       case 'enum':
         // Value must be an array of strings
         var items = utils.is('Array', value) ? value : [value],
-            enumerable = [];
-        // Loop
-        items.forEach(function(item) {
+            enumerable = [],
+            l = items.length,
+            i = l;
+        while (i--) {
           // Add only if string and not empty
-          if (utils.is('String', item) && item.length) {
-            // Push to enum
-            enumerable.push(item);
+          if (utils.is('String', items[l - i - 1]) && items[l - i - 1].length) {
+            enumerable.push(items[l - i - 1]);
           }
-        });
-        // Set enumerable
+        }
         this[attribute] = enumerable;
-        // If there's default
         if (this.hasDefault()) {
-          // Get default value
           var defaultValue = this.getDefault();
-          // If not valid enum
           if (!this.isValidEnum(defaultValue)) {
-            // Throw
             this.throw('Invalid enum default value: ' + defaultValue);
           }
         }
         break;
     }
-  };
+  }
+
+  /**
+   * Get default value
+   */
+  function getDefault(model) {
+    // Execute if method
+    return utils.isFunction(this.default) ? 
+           this.default.apply(this, utils.isDefined(model) ? [model] : []) :
+           this.default;
+  }
+
+  /**
+   * Has default
+   */
+  function hasDefault() {
+    return utils.isDefined(this.default);
+  }
+
+  /**
+   * Check if enum is valid
+   */
+  function isValidEnum(value) {
+    return this.enum.indexOf(value) >= 0;
+  }
 
   /**
    * Throw error
    */
-  Key.prototype.throw = function(message, model) {
-    // Do throw
+  function throwException(message, model) {
     Model.Exception.prototype.throw.apply(model || this, [message]);
-  };
-
-  /**
-   * Export key
-   */
-  Key.prototype.export = function() {
-    // Json
-    var self = this, json = {
-      type: this.type.original || this.type
-    };
-    // If there's default
-    if (this.hasDefault()) {
-      // Add
-      json.default = this.default;
-    }
-    // Loop through attributes
-    keyAttributes.forEach(function(attribute) {
-      // If set
-      if (utils.isDefined(self[attribute])) {
-        // Add
-        json[attribute] = self[attribute];
-      }
-    });
-    // Return
-    return json;
-  };
-
-  // Set Key
-  Model.Schema.Key = Key;
-
-  // Inject window, Model, and utils
-})(window, window.Model, window.Model.utils);
+  }
+})(window, 
+   window.Model, 
+   window.Model.utils);

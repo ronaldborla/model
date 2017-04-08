@@ -4,36 +4,33 @@
 (function(window, Type, Types, utils) {
   'use strict';
 
-  /**
-   * Create type
-   */
-  Types.Any = new Type('Any');
+  Types.Any           = new Type('Any');
+  Types.Any.compare   = compareType;
+  Types.Any.inherits  = inherits;
+  Types.Any.is        = isType;
+
+  ////////
 
   /**
    * Compare objects
    */
-  Types.Any.compare = function(a, b, deep, level) {
-    // Return
+  function compareType(a, b, deep, level) {
     return false;
-  };
-
-  /**
-   * Always return true
-   */
-  Types.Any.is = function(value) {
-    // Return true
-    return true;
-  };
+  }
   
   /**
    * Inherits constructor
    */
-  Types.Any.inherits = function(Constructor) {
-    // Check
+  function inherits(Constructor) {
     return false;
-  };
-  
-  // Inject
+  }
+
+  /**
+   * Always return true
+   */
+  function isType(value) {
+    return true;
+  }
 })(window, 
    window.Model.Schema.Type, 
    window.Model.Schema.Types, 

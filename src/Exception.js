@@ -1,38 +1,32 @@
-
 /**
- * Define Exception
+ * Model Exception
  */
-(function(window, Model, utils, undefined) {
+(function(window, Error, Model, utils, undefined) {
   'use strict';
 
-  /**
-   * The Exception
-   */
-  var Exception = utils.inherit(window.Error, function(construct) {
-    // Return Constructor
-    return function Exception(message, source) {
-      // Construct
-      var self = construct(this);
+  Model.Exception = utils.inherit(Error, function(construct) {
+    return Exception;
 
-      // Set message
+    ////////
+
+    function Exception(message, source) {
+      construct(this);
       this.message = message;
-      // Set source
       this.source = source;
-      // Set stack
       this.stack = (new Error()).stack;
-    };
+    }
   });
+  Model.Exception.prototype.throw = throwException;
+
+  ////////
 
   /**
    * Throw error
    */
-  Exception.prototype.throw = function(message) {
-    // Throw error
-    throw new Exception(message, this);
-  };
-
-  // Set Exception
-  Model.Exception = Exception;
-
-  // Inject Model
-})(window, window.Model, window.Model.utils);
+  function throwException(message) {
+    throw new Model.Exception(message, this);
+  }
+})(window, 
+   window.Error, 
+   window.Model, 
+   window.Model.utils);

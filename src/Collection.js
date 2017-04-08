@@ -1,66 +1,42 @@
-
 /**
  * Define Collection
  */
 (function(window, Model, utils, undefined) {
   'use strict';
 
+  Model.Collection = Collection;
+
+  ////////
+
   /**
    * Collection
    * Collection of Models
    */
-  var Collection = function(ModelConstructor, define) {
+  function Collection(ModelConstructor, define) {
     // Model constructor must be a model
     if (!utils.inherits('Model', ModelConstructor)) {
-      // Throw error
       utils.throw('Constructor must inherit the Model constructor');
     }
 
     // The constructor and the methods
     var Constructor = null,
-        methods = {},
-        virtuals = {},
-        statics = {},
-        Arr = window.Array.prototype,
-        call = function(method, array, args) {
-          // Return
-          return Arr[method].call(array, args || []);
-        },
-        apply = function(method, array, args) {
-          // Return
-          return Arr[method].apply(array, args || []);
-        };
+        methods     = {},
+        virtuals    = {},
+        statics     = {},
+        Arr         = window.Array.prototype,
+        $           = utils.$;
 
-    // Set $
-    var $ = utils.$;
+    methods.define  = utils.define;
+    methods.on      = utils.on;
+    methods.fire    = utils.fire;
+    methods.emit    = utils.emit;
+    methods.change  = utils.change;
+    methods.throw   = utils.throw;
 
-    /**
-     * Construct the object
-     * This sets default values for the attributes
-     */
-    var construct = function(self) {
-      // Create listeners
-      $(self).listeners = {};
-      // Return self
-      return self;
-    };
-
-    // Set define
-    methods.define = utils.define;
-    // Set on
-    methods.on = utils.on;
-    // Set fire
-    methods.fire = utils.fire;
-    // Set emit
-    methods.emit = utils.emit;
-    // Set change
-    methods.change = utils.change;
-    // Set throw
-    methods.throw = utils.throw;
-
+    statics.isCollection = true;
+  
     // If define is a callback
     if (utils.isFunction(define)) {
-      // Call define and get the constructor
       Constructor = define(construct, methods, virtuals, statics);
     }
 
@@ -68,32 +44,61 @@
     if (!utils.isFunction(Constructor)) {
       // Create a default constructor
       Constructor = function Collection(data) {
-        // Do construct and load
         construct(this).load(data);
       };
     }
+    
+    ////////
 
     /**
-     * Constructor is a collection
+     * Apply array method
      */
-    statics.isCollection = true;
-    
+    function apply(method, array, args) {
+      return Arr[method].apply(array, args || []);
+    }
+
+    /**
+     * Call array method
+     */
+    function call(method, array, args) {
+      return Arr[method].call(array, args || []);
+    }
+
+    /**
+     * Construct the object
+     * This sets default values for the attributes
+     */
+    function construct(self) {
+      // Create listeners
+      $(self).listeners = {};
+      return self;
+    }
+
     // Unlike in a Model, we don't want to execute Array's default constructor
     return utils.inherit(window.Array, function() {
-      // Return Constructor
       return Constructor;
       // Define prototype
     }, function(proto, Collection) {
+      proto.convert   = convertItem;
+      proto.load      = loadItems;
+      proto.fill      = fillArray;
+      proto.filter    = filterData;
+      proto.Model     = ModelConstructor;
+      proto.push      = pushItem;
+      proto.splice    = spliceArray;
+      proto.toJson    = toJson;
+      proto.toObject  = toObject;
+      proto.unshift   = unshiftArray;
 
-      /**
-       * Set ModelConstructor
-       */
-      proto.Model = ModelConstructor;
+      // Extend Constructor
+      return utils.extendConstructor(Collection, methods, virtuals, statics);
+
+      ////////
 
       /**
        * Convert item to Model
        */
-      proto.convert = function(item) {
+      function convertItem(item) {
         // Filter convert
         item = this.filter('convert', item);
         // If not an instance of Constructor
@@ -103,113 +108,96 @@
         }
         // Set parent
         utils.$(item).parent = this;
-        // Return item
         return item;
-      };
-
-      /**
-       * Load data
-       */
-      proto.load = function(items) {
-        // Empty first
-        this.length = 0;
-        // Push data
-        this.push.apply(this, items);
-        // Return self
-        return this;
-      };
-
-      /**
-       * Filter
-       */
-      proto.filter = function(name, data) {
-        // Return data
-        return data;
-      };
-
-      /**
-       * Override push
-       */
-      proto.push = function() {
-        // Self
-        var self = this;
-        // Push arguments
-        return apply('push', this, call('slice', arguments || {}).map(function(arg) {
-          // Return
-          return self.convert(arg);
-        }));
-      };
+      }
 
       /**
        * Override fill
        */
-      proto.fill = function() {
+      function fillArray() {
         // If there's first argument
         if (utils.isDefined(arguments[0])) {
           // Convert
           arguments[0] = this.convert(arguments[0]);
         }
-        // Apply
         return apply('fill', this, arguments);
-      };
+      }
+
+      /**
+       * Filter
+       */
+      function filterData(name, data) {
+        return data;
+      }
+
+      /**
+       * Load data
+       */
+      function loadItems(items) {
+        this.length = 0;
+        this.push.apply(this, items);
+        return this;
+      }
+
+      /**
+       * Override push
+       */
+      function pushItem() {
+        var self = this;
+        // Push arguments
+        return apply('push', this, call('slice', arguments || {}).map(function(arg) {
+          return self.convert(arg);
+        }));
+      }
 
       /**
        * Override splice
        */
-      proto.splice = function() {
+      function spliceArray() {
         // Get args
         var args = call('slice', arguments || {});
         // If length is greater than 2
         if (args.length > 2) {
-          // Loop through args
-          for (var i = 2; i < args.length; i++) {
+          var l = args.length,
+              i = l - 2;
+          while (i--) {
             // Convert each
-            args[i] = this.convert(args[i]);
+            args[l - i - 1] = this.convert(args[l - i - 1]);
           }
         }
-        // Return
         return apply('splice', this, args);
-      };
-
-      /**
-       * Override unshift
-       */
-      proto.unshift = function() {
-        // Self
-        var self = this;
-        // Push arguments
-        return apply('unshift', this, call('slice', arguments || {}).map(function(arg) {
-          // Return
-          return self.convert(arg);
-        }));
-      };
-
-      /**
-       * To object
-       */
-      proto.toObject = function(exclude) {
-        // Map
-        return this.map(function(item) {
-          // Return object
-          return item.toObject(exclude);
-        });
-      };
+      }
 
       /**
        * To json
        */
-      proto.toJson = function(exclude, replacer, space) {
-        // Return stringified
+      function toJson(exclude, replacer, space) {
         return JSON.stringify(this.toObject(exclude), replacer, space);
-      };
+      }
 
-      // Extend Constructor
-      return utils.extendConstructor(Collection, methods, virtuals, statics);
+      /**
+       * To object
+       */
+      function toObject(exclude) {
+        // Map
+        return this.map(function(item) {
+          return item.toObject(exclude);
+        });
+      }
+
+      /**
+       * Override unshift
+       */
+      function unshiftArray() {
+        // Self
+        var self = this;
+        // Push arguments
+        return apply('unshift', this, call('slice', arguments || {}).map(function(arg) {
+          return self.convert(arg);
+        }));
+      }
     });
-  };
-
-  // Set Collection
-  Model.Collection = Collection;
-
-  // Inject window, Model, and utils
-})(window, window.Model, window.Model.utils);
+  }
+})(window, 
+   window.Model, 
+   window.Model.utils);

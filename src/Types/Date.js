@@ -4,20 +4,18 @@
 (function(window, Type, Types) {
   'use strict';
 
-  /**
-   * Create type
-   */
-  Types.Date = new Type('Date', window.Date, true);
+  Types.Date    = new Type('Date', window.Date, true);
+  Types.Date.is = isType;
+
+  ////////
   
   /**
    * Check if Date
    */
-  Types.Date.is = function(value) {
+  function isType(value) {
     // Return
     return value && ((value.constructor === window.Date) || (value instanceof window.Date));
-  };
-  
-  // Inject
+  }
 })(window, 
    window.Model.Schema.Type, 
    window.Model.Schema.Types);

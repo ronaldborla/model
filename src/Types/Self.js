@@ -4,28 +4,25 @@
 (function(window, Type, Types, utils) {
   'use strict';
 
-  /**
-   * Create type
-   */
-  Types.Self = new Type('Self');
+  Types.Self          = new Type('Self');
+  Types.Self.compare  = compareType;
+  Types.Self.is       = isType;
+
+  ////////
 
   /**
    * Compare objects
    */
-  Types.Self.compare = function(a, b, deep, level) {
-    // Return
+  function compareType(a, b, deep, level) {
     return false;
-  };
+  }
   
   /**
    * Always return false
    */
-  Types.Self.is = function(value) {
-    // Return false
+  function isType(value) {
     return false;
-  };
-  
-  // Inject
+  }
 })(window, 
    window.Model.Schema.Type, 
    window.Model.Schema.Types, 

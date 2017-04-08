@@ -1,9 +1,12 @@
-
 /**
  * Define Model
  */
-window.Model = (function(window, undefined) {
+(function(window, undefined) {
   'use strict';
+
+  window.Model = Model;
+
+  ////////
 
   /**
    * JS Model
@@ -11,287 +14,38 @@ window.Model = (function(window, undefined) {
    * @param define Callback to define the methods 
    * @return The constructor of the new Model
    */
-  var Model = function(schema, define) {
+  function Model(schema, define) {
+    var $           = Model.utils.$,
+        Constructor = null,
+        methods     = {},
+        options     = {},
+        statics     = {},
+        utils       = Model.utils,
+        virtuals    = {};
 
-    // The constructor and the methods
-    var Constructor = null,
-        methods = {},
-        virtuals = {},
-        statics = {},
-        options = {},
-        utils = Model.utils;
+    methods.change    = utils.change;
+    methods.define    = utils.define;
+    methods.emit      = utils.emit;
+    methods.filter    = filterData;
+    methods.fire      = utils.fire;
+    methods.get       = getAttribute;
+    methods.load      = loadData;
+    methods.on        = utils.on;
+    methods.set       = setAttribute;
+    methods.throw     = utils.throw;
+    methods.toJson    = toJson;
+    methods.toObject  = toObject;
 
-    // Set $
-    var $ = utils.$;
+    statics.inherit   = inherit;
+    statics.isModel   = true;
 
-    /**
-     * Get attr
-     */
-    var attr = function(self) {
-      // Return
-      return $(self).attributes;
-    };
-
-    /**
-     * Construct the object
-     * This sets default values for the attributes
-     */
-    var construct = function(self, args) {
-      // Create attributes
-      $(self).attributes = {};
-      // Create listeners
-      $(self).listeners = {};
-      // Loop through schema
-      self.schema.forEach(function(key) {
-        // Only if default is defined
-        if (key.hasDefault()) {
-          // Set default value
-          self[key.name] = key.getDefault(self);
-        }
-      });
-      // Return self
-      return self;
-    };
-
-    /**
-     * Get attribute
-     */
-    methods.get = function(name) {
-      // Get method
-      var method = utils.camelCase(['get', name, 'attribute'].join(' ')),
-          orig = attr(this)[name];
-      // If set
-      if (utils.isFunction(this[method])) {
-        // Use it
-        return this[method].apply(this, [orig]);
-        // Otherwise
-      } else {
-        // Return original
-        return orig;
-      }
-    };
-
-    /**
-     * Set attribute
-     */
-    methods.set = function(name, value) {
-      // The key
-      var key = this.schema.get(name),
-          // This attributes
-          attributes = attr(this),
-          // Previous
-          previous = attributes[name],
-          // Method
-          method = utils.camelCase(['set', name, 'attribute'].join(' ')),
-          // Evaluate
-          evaluated = key.evaluate(value, this);
-      // If method is set
-      if (utils.isFunction(this[method])) {
-        // Use it
-        attributes[name] = this[method].apply(this, [evaluated, previous]);
-      } else {
-        // Set directly
-        attributes[name] = evaluated;
-      }
-      // If result is an object
-      if (attributes[name] && typeof attributes[name] === 'object') {
-        // Set its parent
-        utils.$(attributes[name]).parent = this;
-      }
-      // Call set attribute
-      this.fire('setAttribute', [name, attributes[name], previous]);
-      // Set specific attribute
-      this.fire(method, [attributes[name], previous]);
-      // If changed
-      if (utils.typeCompare(key.type, attributes[name], previous)) {
-        // Change
-        this.change();
-      }
-      // Return self
-      return this;
-    };
-
-    // Set define
-    methods.define = utils.define;
-    // Set on
-    methods.on = utils.on;
-    // Set fire
-    methods.fire = utils.fire;
-    // Set emit
-    methods.emit = utils.emit;
-    // Set change
-    methods.change = utils.change;
-    // Set throw
-    methods.throw = utils.throw;
-
-    /**
-     * Load data
-     * @param data The data to load
-     */
-    methods.load = function(data) {
-      // The object
-      var self = this;
-      // Call filter
-      data = this.filter('load', data);
-      // If there's data
-      if (utils.isDefined(data)) {
-        // Before load
-        this.fire('beforeload', [data]);
-        // Loop through schema
-        this.schema.forEach(function(key) {
-          // If data is defined
-          if (utils.isDefined(data[key.name])) {
-            // Set data
-            self[key.name] = data[key.name];
-          }
-        });
-        // Call load
-        this.fire('load');
-      }
-      // Return self
-      return this;
-    };
-
-    /**
-     * Filter
-     */
-    methods.filter = function(name, data) {
-      // Return data
-      return data;
-    };
-
-    /**
-     * To object
-     */
-    methods.toObject = function(exclude) {
-      // The object
-      var self = this,
-          object = {};
-      // If defined
-      if (utils.isDefined(exclude)) {
-        // If string
-        if (utils.is('String', exclude)) {
-          // Put in array
-          exclude = [exclude];
-        }
-        // If array
-        if (utils.is('Array', exclude)) {
-          // Convert
-          exclude = utils.arrayOfStringsToObject(exclude);
-        }
-      } else {
-        // Default to object
-        exclude = {};
-      }
-      // If exclude is not object
-      if (!utils.is('Object', exclude)) {
-        // Error
-        this.throw('`exclude` must be an object or an array of strings');
-      }
-      // Register value
-      var registerValue = function(key) {
-        // Key name
-        var keyName = key.name || key;
-        // Must not be excluded
-        if (exclude[keyName] !== true) {
-          // Get value
-          var exportMethod = utils.camelCase(['export', keyName, 'attribute'].join(' ')),
-              // Check if there's an export method
-              value = utils.isFunction(self[exportMethod]) ?
-                      // Use the one defined in the method
-                      self[exportMethod].apply(self, [self[keyName]]) :
-                      // Use as is
-                      self[keyName],
-              // If there's a toObject method
-              hasToObject = value && utils.isFunction(value.toObject);
-          // If no toObject but object and not array
-          if (!hasToObject && 
-              utils.is('Object', value) &&
-              !utils.is('Array', value)) {
-            // If date
-            if (utils.is('Date', value)) {
-              // Convert to string
-              value = value.toString();
-            } else {
-              // Clean
-              value = utils.cleanObject(value);
-            }
-          }
-          // Set it
-          object[keyName] = hasToObject ? value.toObject(exclude[keyName]) : value;
-        }
-      };
-      // Loop through schema
-      this.schema.forEach(registerValue);
-      // If there's virtuals in export
-      if (this.schema.options &&
-          this.schema.options.export &&
-          !!this.schema.options.export.virtuals) {
-        // Loop through virtuals
-        this.schema.virtuals.forEach(registerValue);
-      }
-      // Call filter
-      object = this.filter('export', object);
-      // Export callback
-      this.fire('export', [object, exclude]);
-      // Return
-      return object;
-    };
-
-    /**
-     * To json
-     */
-    methods.toJson = function(exclude, replacer, space) {
-      // Return stringified
-      return JSON.stringify(this.toObject(exclude), replacer, space);
-    };
-
-    /**
-     * Constructor is a Model
-     */
-    statics.isModel = true;
-
-    /**
-     * Inherit the Model
-     */
-    statics.inherit = function(extendSchema, defineModel) {
-      // Parent schema
-      var parentSchema = this.prototype.schema,
-          // The child schema
-          childSchema = parentSchema.export(extendSchema),
-          // Define methods
-          methods = {},
-          virtuals = {},
-          statics = {},
-          options = utils.clone(parentSchema.options || {});
-      // Inherit
-      return utils.inherit(parentSchema.Constructor, function(construct) {
-        // Use defineModel
-        return defineModel(construct, methods, virtuals, statics, options);
-        // Define prototype
-      }, function(proto, Constructor) {
-        // Override schema
-        proto.schema = new Model.Schema(Constructor, 
-                                        childSchema, 
-                                        parentSchema, 
-                                        utils.keys(virtuals || {}),
-                                        options);
-        // Extend
-        return utils.extendConstructor(Constructor, methods, virtuals, statics);
-      });
-    };
-
-    // If define is a callback
     if (utils.isFunction(define)) {
-      // Call define and get the constructor
       Constructor = define(construct, methods, virtuals, statics, options);
     }
 
-    // If Constructor is not a function
     if (!utils.isFunction(Constructor)) {
       // Create a default constructor
       Constructor = function Model(data) {
-        // Do construct and load
         construct(this).load(data);
       };
     }
@@ -303,12 +57,201 @@ window.Model = (function(window, undefined) {
                                                     utils.keys(virtuals || {}),
                                                     options);
 
-    // Extend and return Constructor 
     return utils.extendConstructor(Constructor, methods, virtuals, statics);
-  };
 
-  // Return Model
-  return Model;
+    ////////
 
-  // Inject window
+    /**
+     * Get attr
+     */
+    function attr(self) {
+      return $(self).attributes;
+    }
+
+    /**
+     * Construct the object
+     * This sets default values for the attributes
+     */
+    function construct(self, args) {
+      $(self).attributes  = {};
+      $(self).listeners   = {};
+      var l = self.schema.length,
+          i = l;
+      while (i--) {
+        // Only if default is defined
+        if (self.schema[l - i - 1].hasDefault()) {
+          self[self.schema[l - i - 1].name] = self.schema[l - i - 1].getDefault(self);
+        }
+      }
+      return self;
+    }
+
+    /**
+     * Filter
+     */
+    function filterData(name, data) {
+      // Return data
+      return data;
+    }
+
+    /**
+     * Get attribute
+     */
+    function getAttribute(name) {
+      // Get method
+      var method  = utils.camelCase(['get', name, 'attribute'].join(' ')),
+          orig    = attr(this)[name];
+      // If set
+      if (utils.isFunction(this[method])) {
+        // Use it
+        return this[method].apply(this, [orig]);
+      } else {
+        return orig;
+      }
+    }
+
+    /**
+     * Inherit the Model
+     */
+    function inherit(extendSchema, defineModel) {
+      var parentSchema  = this.prototype.schema,
+          childSchema   = parentSchema.export(extendSchema),
+          methods       = {},
+          options       = utils.clone(parentSchema.options || {}),
+          statics       = {},
+          virtuals      = {};
+      // Inherit parent
+      return utils.inherit(parentSchema.Constructor, function(construct) {
+        return defineModel(construct, methods, virtuals, statics, options);
+      }, function(proto, Constructor) {
+        proto.schema = new Model.Schema(Constructor, 
+                                        childSchema, 
+                                        parentSchema, 
+                                        utils.keys(virtuals || {}),
+                                        options);
+        return utils.extendConstructor(Constructor, methods, virtuals, statics);
+      });
+    }
+
+    /**
+     * Load data
+     * @param data The data to load
+     */
+    function loadData(data) {
+      var self = this;
+      // Call filter
+      data = this.filter('load', data);
+      // If there's data
+      if (utils.isDefined(data)) {
+        this.fire('beforeload', [data]);
+        var l = this.schema.length,
+            i = l;
+        while (i--) {
+          // If data is defined
+          if (utils.isDefined(data[this.schema[l - i - 1].name])) {
+            self[this.schema[l - i - 1].name] = data[this.schema[l - i - 1].name];
+          }
+        }
+        this.fire('load');
+      }
+      return this;
+    }
+
+    /**
+     * Set attribute
+     */
+    function setAttribute(name, value) {
+      var key         = this.schema.get(name),
+          attributes  = attr(this),
+          previous    = attributes[name],
+          method      = utils.camelCase(['set', name, 'attribute'].join(' ')),
+          evaluated   = key.evaluate(value, this);
+      // If method is set
+      if (utils.isFunction(this[method])) {
+        attributes[name] = this[method].apply(this, [evaluated, previous]);
+      } else {
+        attributes[name] = evaluated;
+      }
+      // If result is an object
+      if (attributes[name] && typeof attributes[name] === 'object') {
+        utils.$(attributes[name]).parent = this;
+      }
+      this.fire('setAttribute', [name, attributes[name], previous]);
+      this.fire(method, [attributes[name], previous]);
+      // If changed
+      if (utils.typeCompare(key.type, attributes[name], previous)) {
+        this.change();
+      }
+      return this;
+    }
+
+    /**
+     * To json
+     */
+    function toJson(exclude, replacer, space) {
+      return JSON.stringify(this.toObject(exclude), replacer, space);
+    }
+
+    /**
+     * To object
+     */
+    function toObject(exclude) {
+      var i = 0,
+          l = 0,
+          self    = this,
+          object  = {};
+      if (utils.isDefined(exclude)) {
+        if (utils.is('String', exclude)) {
+          exclude = [exclude];
+        }
+        if (utils.is('Array', exclude)) {
+          exclude = utils.arrayOfStringsToObject(exclude);
+        }
+      } else {
+        exclude = {};
+      }
+      if (!utils.is('Object', exclude)) {
+        this.throw('`exclude` must be an object or an array of strings');
+      }
+      // Register value
+      function registerValue(key) {
+        var keyName = key.name || key;
+        // Must not be excluded
+        if (exclude[keyName] !== true) {
+          var exportMethod  = utils.camelCase(['export', keyName, 'attribute'].join(' ')),
+              value         = utils.isFunction(self[exportMethod]) ?
+                              self[exportMethod].apply(self, [self[keyName]]) :
+                              self[keyName],
+              hasToObject   = value && utils.isFunction(value.toObject);
+          // If no toObject but object and not array
+          if (!hasToObject              && 
+              utils.is('Object', value) &&
+              !utils.is('Array', value)) {
+            if (utils.is('Date', value)) {
+              value = value.toString();
+            } else {
+              value = utils.cleanObject(value);
+            }
+          }
+          object[keyName] = hasToObject ? value.toObject(exclude[keyName]) : value;
+        }
+      }
+      i = l = this.schema.length;
+      while (i--) {
+        registerValue(this.schema[l - i - 1]);
+      }
+      // If there's virtuals in export
+      if (this.schema.options         &&
+          this.schema.options.export  &&
+          !!this.schema.options.export.virtuals) {
+        i = l = this.schema.virtuals.length;
+        while (i--) {
+          registerValue(this.schema.virtuals[l - i - 1]);
+        }
+      }
+      object = this.filter('export', object);
+      this.fire('export', [object, exclude]);
+      return object;
+    }
+  }
 })(window);

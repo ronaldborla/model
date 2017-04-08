@@ -1,4 +1,3 @@
-
 /**
  * Define Schema
  */
@@ -9,101 +8,88 @@
    * The Schema
    * Inherit Array
    */
-  var Schema = utils.inherit(window.Array, function(construct) {
+  Model.Schema = utils.inherit(window.Array, function(construct) {
+    return Schema;
+
     // Return Constructor
-    return function Schema(Constructor, schema, parent, virtuals, options) {
-      // Self
-      var self = construct(this);
+    function Schema(Constructor, schema, parent, virtuals, options) {
+      var i = 0,
+          l = 0;
+          
+      this.Constructor  = Constructor;
+      this.parent       = parent || null;
+      this.virtuals     = virtuals || [];
+      this.options      = options || {};
+      this.index        = {};
 
-      // This Constructor
-      this.Constructor = Constructor;
-      // Parent schema
-      this.parent = parent || null;
-      // The virtuals
-      this.virtuals = virtuals || [];
-      // The options
-      this.options = options || {};
-      // Create index
-      this.index = {};
-
-      // If there's parent
       if (this.parent) {
-        // Inherit virtuals
-        this.parent.virtuals.forEach(function(virtual) {
-          // Add if not exists
-          if (self.virtuals.indexOf(virtual) < 0) {
-            // Push
-            self.virtuals.push(virtual);
+        i = l = this.parent.virtuals.length;
+        while (i--) {
+          if (this.virtuals.indexOf(this.parent.virtuals[l - i - 1]) < 0) {
+            this.virtuals.push(this.parent.virtuals[l - i - 1]);
           }
-        });
+        }
       }
 
-      // If there's schema
       if (utils.isDefined(schema)) {
-        // Loop
-        utils.forEach(schema, function(definition, name) {
-          // Set it
-          self.set(name, definition);
-        });
+        var keys = window.Object.keys(schema);
+        i = l = keys.length;
+        while (i--) {
+          this.set(keys[l - i - 1], schema[keys[l - i - 1]]);
+        }
       }
-    };
-    // Define prototype
+    }
   }, function(proto, Schema) {
+    proto.export  = exportSchema;
+    proto.get     = getKey;
+    proto.set     = setKey;
+
+    ////////
 
     /**
-     * Get schema
+     * Export Schema
      */
-    proto.get = function(name) {
+    function exportSchema(extend) {
+      // All keys
+      var json = {},
+          l = this.length,
+          i = l;
+      while (i--) {
+        json[this[l - i - 1].name] = this[l - i - 1].export();
+      }
+      return utils.extend(json, extend || {});
+    }
+
+    /**
+     * Get key
+     */
+    function getKey(name) {
       // If index is defined
       if (utils.isDefined(this.index[name])) {
-        // Return immediately
         return this[this.index[name]];
       }
-      // Find
-      for (var i = 0; i < this.length; i++) {
-        // Match name
-        if (this[i].name === name) {
+      var l = this.length,
+          i = l;
+      while (i--) {
+        if (this[l - i - 1].name === name) {
           // Put into index
-          this.index[name] = i;
+          this.index[name] = l - i - 1;
           break;
         }
       }
-      // Return key
       return this[this.index[name]];
-    };
+    }
 
     /**
      * Set Schema
      * Translate from raw schema
      */
-    proto.set = function(name, definition) {
-      // Create key
+    function setKey(name, definition) {
       var key = new Schema.Key(this, name, definition);
-      // Add to index immediately
       this.index[key.name] = this.length;
-      // Push translated
       this.push(key);
-    };
-
-    /**
-     * Export Schema
-     */
-    proto.export = function(extend) {
-      // All keys
-      var json = {};
-      // Loop through keys
-      this.forEach(function(key) {
-        // Add to json
-        json[key.name] = key.export();
-      });
-      // Return
-      return utils.extend(json, extend || {});
-    };
-
+    }
   });
-
-  // Set Schema
-  Model.Schema = Schema;
-
-  // Inject window, Model, and utils
-})(window, window.Model, window.Model.utils);
+})(window, 
+   window.Model, 
+   window.Model.utils);

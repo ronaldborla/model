@@ -1,94 +1,77 @@
-
 /**
  * Define Type
  */
 (function(window, Model, utils, undefined) {
   'use strict';
 
+  Model.Schema.Type   = Type;
+  Model.Schema.Types  = {};
+
+  Type.prototype.compare  = compareType;
+  Type.prototype.inherits = inherits;
+  Type.prototype.is       = isType;
+  Type.prototype.match    = matchConstructor;
+
+  ////////
+
   /**
    * Property Type
    */
-  var Type = function(name, Constructor, native) {
-    // Self
-    var self = this;
-    // Set it
-    this.name = name;
-    // Raw type
-    this.raw = (name || '').toLowerCase();
-    // Set Constructor
-    this.Constructor = Constructor || null;
-    // Type is native
-    this.native = !!native;
-    // Original type
-    this.original = null;
-  };
-
-  // Check if constructor matches
-  Type.prototype.match = function(check) {
-    // If check is instance of Self
-    if (check instanceof (this.prototype || this).constructor) {
-      // Return match
-      return this.match(check.name);
-    }
-    // Match
-    var match = 'Constructor';
-    // If string
-    if (utils.is('String', check)) {
-      // Match by name
-      match = 'name';
-    }
-    // Return
-    return this[match] === check;
-  };
+  function Type(name, Constructor, native) {
+    this.Constructor  = Constructor || null;
+    this.name         = name;
+    this.native       = !!native;
+    this.original     = null;
+    this.raw          = (name || '').toLowerCase();
+  }
 
   /**
-   * Check if a variable is a type or instance of constructor
+   * Compare
    */
-  Type.prototype.is = function(value) {
-    // If null
-    // This is to fix typeof null == 'object' (-_-)
-    if (value === null) {
-      // Return false
-      return false;
-    }
-    // Get type
-    var type = ((typeof value) || '').toLowerCase();
-    // If object
-    if (type === 'object') {
-      // If object, match constructor
-      if (value instanceof this.Constructor) {
-        // Return true
-        return true;
-      }
-    }
-    // Match
-    return (this.raw === type);
-  };
+  function compareType(a, b, deep, level) {
+    return a - b;
+  }
 
   /**
    * Inherits constructor
    */
-  Type.prototype.inherits = function(Constructor) {
-    // Check
+  function inherits(Constructor) {
     return utils.isFunction(Constructor) &&
            (this.Constructor === Constructor);
-  };
+  }
   
   /**
-   * Compare
+   * Check if a variable is a type or instance of constructor
    */
-  Type.prototype.compare = function(a, b, deep, level) {
-    // Return
-    return a - b;
-  };
-
-  // Set Type to Schema
-  Model.Schema.Type = Type;
+  function isType(value) {
+    // This is to fix typeof null == 'object' (-_-)
+    if (value === null) {
+      return false;
+    }
+    var type = ((typeof value) || '').toLowerCase();
+    if (type === 'object') {
+      // If object, match constructor
+      if (value instanceof this.Constructor) {
+        return true;
+      }
+    }
+    return (this.raw === type);
+  }
 
   /**
-   * Model property types
+   * Check if constructor matches
    */
-  Model.Schema.Types = {};
-
-  // Inject Model
-})(window, window.Model, window.Model.utils);
+  function matchConstructor(check) {
+    // If check is instance of Self
+    if (check instanceof (this.prototype || this).constructor) {
+      return this.match(check.name);
+    }
+    var match = 'Constructor';
+    if (utils.is('String', check)) {
+      match = 'name';
+    }
+    return this[match] === check;
+  }
+})(window, 
+   window.Model, 
+   window.Model.utils);

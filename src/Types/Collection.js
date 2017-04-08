@@ -4,55 +4,53 @@
 (function(window, Collection, Type, Types, utils) {
   'use strict';
 
-  /**
-   * Create type
-   */
-  Types.Collection = new Type('Collection');
+  Types.Collection          = new Type('Collection');
+  Types.Collection.compare  = compareType;
+  Types.Collection.inherits = inherits;
+  Types.Collection.is       = isType;
+
+  ////////
 
   /**
    * Compare objects
    */
-  Types.Collection.compare = function(a, b, deep, level) {
+  function compareType(a, b, deep, level) {
     // If not the same constructor
     if (a.constructor !== b.constructor) {
-      // Return
       return true;
     }
     // If deep or there's no level
     if (deep || !level) {
-      // Loop through schema
-      for (var i = 0; i < a.length; i++) {
+      var l = a.length,
+          i = l;
+      while (i--) {
         // Compare
-        if (utils.typeCompare(Types.Model, a[i], b[i], deep, (level || 0) + 1)) {
-          // Return true
+        if (utils.typeCompare(Types.Model, a[l - i - 1], b[l - i - 1], deep, (level || 0) + 1)) {
           return true;
         }
       }
     }
-    // Return false
     return false;
-  };
+  }
+  
+  /**
+   * Inherits constructor
+   */
+  function inherits(Constructor) {
+    // Check
+    return utils.isFunction(Constructor) && !!Constructor.isCollection;
+  }
   
   /**
    * Check if Collection
    */
-  Types.Collection.is = function(value) {
+  function isType(value) {
     // If there's isCollection
     return value && 
            value.prototype && 
            value.prototype.constructor &&
            value.prototype.constructor.isCollection;
-  };
-  
-  /**
-   * Inherits constructor
-   */
-  Types.Collection.inherits = function(Constructor) {
-    // Check
-    return utils.isFunction(Constructor) && !!Constructor.isCollection;
-  };
-  
-  // Inject
+  }
 })(window, 
    window.Model.Collection, 
    window.Model.Schema.Type, 
