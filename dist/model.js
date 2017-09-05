@@ -823,7 +823,7 @@
        */
       function loadItems(items) {
         this.length = 0;
-        this.push.apply(this, items);
+        this.push.apply(this, this.filter('load', items));
         return this;
       }
 
