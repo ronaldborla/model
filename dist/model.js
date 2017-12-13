@@ -56,7 +56,7 @@
                                                     null, 
                                                     utils.keys(virtuals || {}),
                                                     options);
-    Constructor.prototype.$cache = {
+    Constructor.$cache = {
       mutators: {
         get: {},
         set: {}
@@ -483,16 +483,18 @@
       }]);
     }
     // Statics
-    utils.extend(Constructor, statics);
+    utils.extend(Constructor, statics, ['$cache']);
     return Constructor;
   }
 
   /**
    * Extend object
    */
-  function extendObject(left, right) {
+  function extendObject(left, right, ignore) {
     utils.forEach(right, function(value, name) {
-      left[name] = value;
+      if (!ignore || ignore.indexOf(name) < 0) {
+        left[name] = value;
+      }
     });
     return left;
   }

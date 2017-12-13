@@ -56,7 +56,7 @@
                                                     null, 
                                                     utils.keys(virtuals || {}),
                                                     options);
-    Constructor.prototype.$cache = {
+    Constructor.$cache = {
       mutators: {
         get: {},
         set: {}
