@@ -211,18 +211,16 @@
       }]);
     }
     // Statics
-    utils.extend(Constructor, statics, ['$cache']);
+    utils.extend(Constructor, statics);
     return Constructor;
   }
 
   /**
    * Extend object
    */
-  function extendObject(left, right, ignore) {
+  function extendObject(left, right) {
     utils.forEach(right, function(value, name) {
-      if (!ignore || ignore.indexOf(name) < 0) {
-        left[name] = value;
-      }
+      left[name] = value;
     });
     return left;
   }

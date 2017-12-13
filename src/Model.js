@@ -56,12 +56,6 @@
                                                     null, 
                                                     utils.keys(virtuals || {}),
                                                     options);
-    Constructor.$cache = {
-      mutators: {
-        get: {},
-        set: {}
-      }
-    };
 
     return utils.extendConstructor(Constructor, methods, virtuals, statics);
 
@@ -104,17 +98,13 @@
      * Get attribute
      */
     function getAttribute(name) {
-      // Get mutator method
-      var mutator = this.constructor.$cache.mutators.get[name],
+      // Get method
+      var method  = utils.camelCase(['get', name, 'attribute'].join(' ')),
           orig    = attr(this)[name];
-      if (utils.isUndefined(mutator)) {
-        var fn = utils.camelCase(['get', name, 'attribute'].join(' '));
-        mutator = 
-          this.constructor.$cache.mutators.get[name] =
-          utils.isFunction(this[fn]) ? fn : null;
-      }
-      if (mutator !== null) {
-        return this[mutator].apply(this, [orig]);
+      // If set
+      if (utils.isFunction(this[method])) {
+        // Use it
+        return this[method].apply(this, [orig]);
       } else {
         return orig;
       }
@@ -174,16 +164,11 @@
       var key         = this.schema.get(name),
           attributes  = attr(this),
           previous    = attributes[name],
-          mutator     = this.constructor.$cache.mutators.set[name],
+          method      = utils.camelCase(['set', name, 'attribute'].join(' ')),
           evaluated   = key.evaluate(value, this);
-      if (utils.isUndefined(mutator)) {
-        var fn = utils.camelCase(['set', name, 'attribute'].join(' '));
-        mutator =
-          this.constructor.$cache.mutators.set[name] = 
-          utils.isFunction(this[fn]) ? fn : null;
-      }
-      if (mutator !== null) {
-        attributes[name] = this[mutator].apply(this, [evaluated, previous]);
+      // If method is set
+      if (utils.isFunction(this[method])) {
+        attributes[name] = this[method].apply(this, [evaluated, previous]);
       } else {
         attributes[name] = evaluated;
       }
@@ -192,7 +177,7 @@
         utils.$(attributes[name]).parent = this;
       }
       this.fire('setAttribute', [name, attributes[name], previous]);
-      this.fire(mutator, [attributes[name], previous]);
+      this.fire(method, [attributes[name], previous]);
       // If changed
       if (utils.typeCompare(key.type, attributes[name], previous)) {
         this.change();
