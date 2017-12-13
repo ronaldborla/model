@@ -1,0 +1,21 @@
+{
+  "name": "modeljs",
+  "version": "2.0.0",
+  "repository": "https://github.com/ronaldborla/model",
+  "license": "MIT",
+  "scripts": {
+    "start": "http-server -c-1 ./dist/ -o",
+    "build": "rollup -c && cpy src/index.html dist/"
+  },
+  "devDependencies": {
+    "cpy-cli": "^1.0.1",
+    "http-server": "^0.9.0",
+    "rollup": "^0.41.4",
+    "rollup-plugin-node-resolve": "^2.0.0",
+    "rollup-plugin-typescript": "^0.8.1",
+    "typescript": "^2.2.0"
+  },
+  "dependencies": {
+    "typescript-starter": "^1.2.1"
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "extends": "../../tsconfig",
+  "compilerOptions": {
+    "outDir": "dist",
+    "rootDir": "src",
+    "module": "es6",
+    "target": "es5",
+    "declaration": false,
+    "removeComments": true,
+    "lib": [
+      "dom"
+    ]
+  },
+  "include": [
+    "src/*.ts"
+  ]
+}
