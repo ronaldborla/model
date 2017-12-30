@@ -1,4 +1,8 @@
-import { Key } from './key';
+import { __  	 			} from './config';
+import { Collection } from './collection';
+import { Key 	 			} from './key';
+import { Model 			} from './model';
+import { utils 			} from './utils';
 
 /**
  * The Model Schema class
@@ -33,7 +37,7 @@ export class Schema {
 	/**
 	 * The constructor
 	 */
-	private $constructor: any;
+	private __constructor: any;
 
 	/**
 	 * Booted up
@@ -41,30 +45,108 @@ export class Schema {
 	private booted: boolean = false;
 
 	/**
+	 * Model
+	 */
+	private model: Model = null;
+
+	/**
+	 * Options
+	 */
+	private options: object = {};
+
+	/**
+	 * Schema type
+	 */
+	private type: string = 'model';
+
+	/**
+	 * Cache
+	 */
+	private cache: object = {
+		mutators: {
+			get: {},
+			set: {}
+		}
+	};
+
+	/**
 	 * Schema constructor
 	 */
-	constructor(keys: object) {
-		let index = 0;
-		this.keys.$index = {};
-		this.utils.forEach(keys, (key, name) => {
-			var key_instance = new Key(this, name, key);
-			this.keys.$index[key_instance.name] = index++;
-			this.keys.push(key_instance);
-		});
-	}
-
-	/** 
-	 * Get ModelJS instance
-	 */
-	public get model() {
-		return this.constructor.model;
+	constructor(constructor: any, keys?: object, options?: object) {
+		constructor.schema = this;
+		this.__constructor = constructor;
+		this.options = options || {};
+		if (!utils.isUndefined(keys) && keys) {
+			let index = 0;
+			this.keys.__index = {};
+			utils.forEach(keys, (key, name) => {
+				let key_instance = new Key(this, name, key);
+				this.keys.__index[key_instance.name] = index++;
+				this.keys.push(key_instance);
+			});
+		}
 	}
 
 	/**
-	 * Get utils
+	 * All keys
 	 */
-	public get utils() {
-		return this.model.utils;
+	public get all_keys() {
+		if (!utils.isUndefined(this.__keys)) {
+			return this.__keys;
+		}
+		this.__keys = [].concat(this.inherited_keys, this.keys);
+		this.__keys.__index = {};
+		this.__keys.forEach((key, i) => {
+			this.__keys.__index[key.name] = i;
+		});
+		return this.__keys;
+	}
+
+	/**
+	 * Base constructor
+	 */
+	public get base_constructor() {
+		switch (this.type) {
+			case 'collection':
+				return Collection;
+			case 'model':
+				return Model;
+		}
+		return utils.undefined;
+	}
+
+	/**
+	 * Constructors
+	 */
+	public get constructors() {
+		return this.model.schemas[this.type + 's'];
+	}
+
+	/**
+	 * Inherited keys
+	 */
+	public get inherited_keys() {
+		let schema = (this.__constructor.inherits || {}).schema || {},
+				parent_keys = schema.keys || [],
+				keys = [];
+		(schema.inherited_keys || []).forEach((key) => {
+			if (utils.isUndefined(parent_keys.__index[key.name])) {
+				keys.push(key);
+			}
+		});
+		return keys.concat(parent_keys);
+	}
+
+	/**
+	 * Apply defaults
+	 */
+	public applyDefaults(object) {
+		this.all_keys.forEach((key) => {
+			if (!utils.isUndefined(key.default)) {
+				object[key.name] = key.default;
+			}
+		});
+		return object;
 	}
 
 	/**
@@ -74,45 +156,54 @@ export class Schema {
 		if (this.booted) {
 			return this;
 		}
-		let utils = this.utils;
-		if (this.$constructor.inherits) {
-			let inherits = this.$constructor.inherits;
-			// Boot dependency if not yet booted
-			if (!utils.isUndefined(inherits) && !utils.isFunction(inherits)) {
-				this.$constructor.inherits = this.model.schemas[inherits].boot().$constructor;
+		if (utils.isUndefined(this.__constructor.inherits)) {
+			this.__constructor.inherits = this.base_constructor;
+			if (utils.isUndefined(this.__constructor.inherits)) {
+				throw new Error('Invalid schema type: ' + this.type);
 			}
-			utils.inherit(this.$constructor.inherits, this.$constructor);
 		}
-		// Extend constructor
-		this.extend(this, function(constructor: any) {
-			this.boot = boot;
-			this.load = load;
-
-			////////
-
-			/**
-			 * Boot model
-			 */
-			function boot() {
-				this.constructor.$cache = {
-					mutators: {
-						get: {},
-						set: {}
-					}
-				};
-				this.$attributes = {};
-				this.$listeners = {};
+		if (!utils.isFunction(this.__constructor.inherits)) {
+			let parent = this.constructors[this.__constructor.inherits];
+			if (utils.isUndefined(parent)) {
+				throw new Error('Invalid schema type: ' + this.type);
 			}
-
-			/**
-			 * Load attributes
-			 */
-			function load(data) {
-				utils.forEach(data || {}, (value, key) => {
-					this[key] = value;
-				});
-				return this;
+			this.__constructor.inherits = (parent instanceof Schema) ? parent.boot().__constructor : parent;
+		}
+		utils.inherit(this.__constructor.inherits, this.__constructor, [
+			'__constructor',
+			'__name',
+			'inherits',
+			'schema'
+		]);
+		// Define properties
+		utils.forEach(this.methods, (value, key, object) => {
+			if (utils.isFunction(value)) {
+				this.__constructor.prototype[key] = value;
 			}
+		});
+		utils.forEach(this.statics, (value, key, object) => {
+			this.__constructor[key] = value;
+		});
+		this.virtuals.__keys = [];
+		utils.forEach(this.virtuals, (virtual, key) => {
+			let definition: any = {};
+			if (utils.isFunction(virtual)) {
+				definition.get = virtual;
+			} else {
+				if (!virtual) {
+					virtual = {};
+				}
+				if (utils.isFunction(virtual.get)) {
+					definition.get = virtual.get;
+				}
+				if (utils.isFunction(virtual.set)) {
+					definition.set = virtual.set;
+				}
+			}
+			if (utils.isFunction(definition.get) || utils.isFunction(definition.set)) {
+				Object.defineProperty(this.__constructor.prototype, key, definition);
+			}
+			this.virtuals.__keys.push(key);
 		});
 		this.booted = true;
 		return this;
@@ -121,53 +212,43 @@ export class Schema {
 	/**
 	 * Define a model
 	 */
-	public define(constructor: any) {
-		constructor.isModel = true;
-		this.$constructor = constructor;
-		return constructor.schema = this;
-	}
-
-	/**
-	 * Extend a constructor
-	 */
-	public extend(schema: any, define?: any) {
-		// Extend constructor prototype
-		this.utils.forEach(schema.methods, (value, key, object) => {
-			schema.$constructor.prototype[key] = value;
-		});
-		this.utils.forEach(schema.statics, (value, key, object) => {
-			schema.$constructor[key] = value;
-		});
-		this.utils.forEach(schema.virtuals, (virtual, key) => {
-			let definition: any = {};
-			if (this.utils.isFunction(virtual)) {
-				definition.get = virtual;
-			} else {
-				if (!virtual) {
-					virtual = {};
-				}
-				if (this.utils.isFunction(virtual.get)) {
-					definition.get = virtual.get;
-				}
-				if (this.utils.isFunction(virtual.set)) {
-					definition.set = virtual.set;
-				}
-			}
-			if (this.utils.isFunction(definition.get) || this.utils.isFunction(definition.set)) {
-				Object.defineProperty(schema.$constructor.prototype, key, definition);
-			}
-		});
-		if (!this.utils.isUndefined(define)) {
-			define.apply(schema.$constructor.prototype, [schema.$constructor]);
+	public define(modeljs: any, name: string, type?: string, model?: string) {
+		this.__constructor.__name = name;
+		this.model = modeljs;
+		if (!utils.isUndefined(type)) {
+			this.type = type;
+		}
+		if (this.type === 'collection') {
+			this.__constructor.__constructor = model || 'Model';
 		}
 		return this;
 	}
 
 	/**
-	 * Inherit a model
+	 * Has key
 	 */
-	public inherit(model: any) {
-		this.$constructor.inherits = model;
+	public hasKey(name: string) {
+		return !utils.isUndefined(this.getKey(name));
+	}
+
+	/**
+	 * Has virtual
+	 */
+	public hasVirtual(name: string, method?: string = 'get') {
+		if (method === 'get') {
+			return utils.isFunction(this.virtuals[name]) || utils.isFunction(this.virtuals[name].get);
+		} else if (method === 'set') {
+			return !utils.isUndefined(this.virtuals[name]) && utils.isFunction(this.virtuals[name].set);
+		} else {
+			return false;
+		}
+	}
+
+	/**
+	 * Inherit a parent constructor
+	 */
+	public inherit(parent: any) {
+		this.__constructor.inherits = parent;
 		return this;
 	}
 
@@ -175,7 +256,7 @@ export class Schema {
 	 * Get key
 	 */
 	public getKey(name: string) {
-		return this.keys[this.keys.$index[name]];
+		return this.all_keys[this.all_keys.__index[name]];
 	}
 
 	/**
@@ -197,21 +278,24 @@ export class Schema {
 	/**
 	 * Call super method
 	 */
-	public super(model: any, name: string, args?: any) {
+	public super(object: any, name: string, args?: any) {
 		if (name === 'constructor') {
-			return this.$constructor.inherits.apply(model, args || []);
+			return this.__constructor.inherits.apply(object, args || []);
 		} else {
-			return this.$constructor.inherits.prototype[name].apply(model, args || []);
+			return this.__constructor.inherits.prototype[name].apply(object, args || []);
 		}
 	}
 
 	/**
 	 * Setup a virtual method
 	 */
-	public virtual(method: string, name: string, callback: any) {
-		if (this.utils.isUndefined(this.virtuals[name])) {
+	public virtual(name: string, callback: any, method?: string = 'get') {
+		if (method !== 'get' && method !== 'set') {
+			throw new Error('Invalid virtual method: ' + method);
+		}
+		if (utils.isUndefined(this.virtuals[name])) {
 			this.virtuals[name] = {};
-		} else if (this.utils.isFunction(this.virtuals[name])) {
+		} else if (utils.isFunction(this.virtuals[name])) {
 			this.virtuals[name] = {
 				get: this.virtuals[name]
 			};

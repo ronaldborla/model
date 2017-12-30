@@ -1,136 +1,102 @@
-import { Collection } from './collection';
-import { Schema 		} from './schema';
-import { Type 			} from './type';
-import { Utils  		} from './utils';
+import { __ 	 } from './config';
+import { utils } from './utils';
 
 /**
- * The ModelJS class
+ * The Model
  */
 export class Model {
 
 	/**
-	 * The Collection
-	 */
-	public Collection: any = Collection;
-
-	/**
-	 * The Model
-	 */
-	public Model: any = Model;
-
-	/**
-	 * Set Schema so that it can be accessible by modeljs.Schema
-	 */
-	public Schema: any = Schema;
-
-	/**
-	 * Types
-	 */
-	public Types: object = {};
-
-	/**
-	 * The utilities
-	 */
-	public utils: Utils = new Utils();
-
-	/**
-	 * Booted
-	 */
-	private booted: boolean = false;
-
-	/**
-	 * Models
-	 */
-	private models: object = {};
-
-	/**
-	 * Schemas
-	 */
-	private schemas: object = {};
-
-	/**
-	 * Model constructor
+	 * The Model constructor
 	 */
 	constructor() {
-		this.Collection.model 
-			= this.Schema.model 
-			= this.utils.model 
-			= this;
-		this.Types.$keys = [];
-		this.Types.$length = 0;
-		// Set keys
-		this.schemas.$keys = [];
-		// Initial types are Javasript Native types
-    ['Array', 'Boolean', 'Date', 'Number', 'Object', 'String'].forEach((type) => {
-    	this.type(type, window[type]);
-    });
+		this[__] = {
+			attributes: {},
+			listeners: {}
+		};
+		this.constructor.schema.applyDefaults(this);
 	}
 
-	/** 
-	 * Boot up
-	 * Models need to be booted up so that the dependencies within schemas can be properly handled
+  /**
+   * Emit an event
+   */
+  public emit(name: string, args: any, source?: any) {
+		return utils.emit().apply(this, [name, args, source]);
+  }
+
+	/**
+	 * Fire an event
 	 */
-	public boot() {
-		if (this.booted) {
-			return this;
-		}
-		// Boot schemas
-		this.schemas.$keys.forEach((name) => {
-			this.models[name] = this.schemas[name].boot().$constructor;
-			this.type(name, this.models[name]);
-		});
-		// Boot keys
-		this.schemas.$keys.forEach((name) => {
-			this.schemas[name].keys.forEach((key) => {
-				key.boot();
-			});
-		});
-		this.booted = true;
-		return this;
+	public fire(name: string, args: any, source?: any) {
+		return utils.fire().apply(this, [name, args, source]);
 	}
 
 	/**
-	 * Register or retrieve a Model
+	 * Load attributes
 	 */
-	public model(name: string, schema?: Schema, constructor?: any) {
-		if (this.utils.isUndefined(schema)) {
-			if (!this.booted) {
-				throw new Error('ModelJS must be booted first');
+	public load(data?: any) {
+		utils.forEach(data || {}, (value, key) => {
+			if (this.constructor.schema.hasKey(key) || this.constructor.schema.hasVirtual(key, 'set')) {
+				this[key] = value;
 			}
-			return this.models[name];
-		} else {
-			constructor.$name = name;
-			this.schemas[name] = schema.define(constructor);
-			this.schemas.$keys.push(name);
-			return this.schemas[name];
-		}
+		});
+		return this.fire('load');
 	}
 
 	/**
-	 * Register/retrieve type
+	 * Listen to an event
 	 */
-	public type(name: string, constructor?: any) {
-		if (this.utils.isUndefined(constructor)) {
-			if (this.utils.isFunction(name)) {
-				for (let i = 0; i < this.Types.$length; i++) {
-					let type = this.Types[this.Types.$keys[i]];
-					if (type.match(name)) {
-						return type;
-					}
+	public on(name: string, callback: any) {
+		return utils.on().apply(this, [name, callback]);
+	}
+
+	/**
+	 * To string
+	 */
+	public toJSON(ignore?: any, replacer?: any, space?: number) {
+		return JSON.stringify(this.toObject(ignore), replacer, space);
+	}
+
+	/**
+	 * Convert to object
+	 */
+	public toObject(ignore?: any) {
+		let object = {},
+				schema = this.constructor.schema;
+		if (!ignore || !ignore.__flattened) {
+			ignore = utils.flattenIgnore(ignore);
+		}
+		schema.all_keys.forEach((key) => {
+			if (ignore[key.name] !== true) {
+				let value = this[key.name];
+				if (value && utils.isFunction(value.toObject)) {
+					value = value.toObject(ignore[key.name]);
+				}
+				if (!utils.isUndefined(value)) {
+					object[key.name] = value;
 				}
 			}
-			if (this.utils.isUndefined(this.Types[name])) {
-				throw new Error('Type `' + name + '` does not exist');
-			}
-			return this.Types[name];
-		} else {
-			if (!this.utils.isUndefined(this.Types[name])) {
-				throw new Error('Type `' + name + '` already exists');
-			}
-			this.Types[name] = new Type(name, constructor);
-			this.Types.$keys.push(name);
-			this.Types.$length++;
-			return this;
+		});
+		if ((schema.options.toObject || {}).virtuals === true) {
+			schema.virtuals.__keys.forEach((key_name) => {
+				if (ignore[key_name] !== true && (utils.isFunction(schema.virtuals[key_name].get) || utils.isFunction(schema.virtuals[key_name]))) {
+					let value = this[key_name];
+					if (value && utils.isFunction(value.toObject)) {
+						value = value.toObject(ignore[key_name]);
+					}
+					if (!utils.isUndefined(value)) {
+						object[key_name] = value;
+					}
+				}
+			});
 		}
+		return object;
+	}
+
+	/**
+	 * To string
+	 */
+	public toString() {
+		return this.toJSON();
 	}
 }

@@ -1,3 +1,2 @@
-dist/test/
-dist/index.html
+.DS_Store
 node_modules/

@@ -1,21 +1,33 @@
 {
   "name": "modeljs",
   "version": "2.0.0",
+  "main": "dist/model.js",
   "repository": "https://github.com/ronaldborla/model",
   "license": "MIT",
+  "engines": {
+    "node": ">=8.9.1"
+  },
   "scripts": {
-    "start": "http-server -c-1 ./dist/ -o",
-    "build": "rollup -c && cpy src/index.html dist/"
+    "beep": "play-sound beep.mp3",
+    "build": "npm run softbuild && npm run uglify",
+    "softbuild": "rollup -c && npm run beep",
+    "start": "npm run watch",
+    "test": "mocha -R list test/index && npm run beep",
+    "uglify": "uglifyjs dist/model.js --output dist/model.min.js && npm run beep",
+    "watch": "concurrently -c 'green,yellow' -n 'script,test' 'npm run watch:script' 'npm run watch:test'",
+    "watch:test": "nodemon -e html,js --ignore dist/ --ignore node_modules/ --ignore src/ -x 'npm run test'",
+    "watch:script": "nodemon -e ts --ignore dist/ --ignore node_modules/ --ignore test/ -x 'npm run softbuild'"
   },
   "devDependencies": {
-    "cpy-cli": "^1.0.1",
-    "http-server": "^0.9.0",
-    "rollup": "^0.41.4",
-    "rollup-plugin-node-resolve": "^2.0.0",
+    "chai": "^4.1.2",
+    "concurrently": "^3.5.1",
+    "glob": "^7.1.2",
+    "mocha": "^4.0.1",
+    "nodemon": "^1.14.3",
+    "play-sound-cli": "^1.0.0",
+    "rollup": "^0.53.0",
     "rollup-plugin-typescript": "^0.8.1",
-    "typescript": "^2.2.0"
-  },
-  "dependencies": {
-    "typescript-starter": "^1.2.1"
+    "typescript": "^2.2.0",
+    "uglify-js": "^3.3.3"
   }
 }

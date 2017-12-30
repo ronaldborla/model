@@ -1,26 +1,17 @@
-// rollup.config.js
 import typescript from 'rollup-plugin-typescript';
-import nodeResolve from 'rollup-plugin-node-resolve';
-
-const pkg = require('./package');
 
 export default {
-  entry: 'src/model.ts',
-    moduleId: pkg.name,
-    moduleName: 'window',
-    dest: 'dist/model.js',
-    format: 'iife',
-    sourceMap: true,
+  input: 'src/model.ts',
+  output: {
+  	extend: true,
+  	file: 'dist/model.js',
+  	format: 'umd',
+		name: 'window',
+  	sourcemap: true
+  },
   plugins: [
     typescript({
-      typescript: require('typescript') // use local version
-    }),
-    nodeResolve({
-      module: true,
-      jsnext: true,
-      browser: true,
-      extensions: [ '.js', '.json' ],
-      preferBuiltins: false
+    	typescript: require('typescript')
     })
   ]
 }

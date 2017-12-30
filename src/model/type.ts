@@ -1,12 +1,9 @@
+import { utils } from './utils';
+
 /**
  * Key Type
  */
 export class Type {
-
-	/**
-	 * The constructor
-	 */
-	public $constructor: any = null;
 
 	/**
 	 * The name
@@ -19,35 +16,53 @@ export class Type {
 	public safe: string = null;
 
 	/**
+	 * The constructor
+	 */
+	private __constructor: any = null;
+
+	/**
 	 * Type constructor
 	 */
 	constructor(name: string, constructor: any) {
 		this.name = name + '';
 		this.safe = this.name.toLowerCase();
-		this.$constructor = constructor;
+		this.__constructor = constructor;
 	}
 
 	/**
-	 * Convert a variable into this type
+	 * Cast a variable into this type
 	 */
-	public convert(variable) {
+	public cast(variable: any, options?: any) {
 		if (!this.is(variable)) {
-			variable = new this.$constructor(variable);
+			variable = new this.__constructor(variable, options);
 		}
 		return variable;
 	}
 
 	/**
+	 * Compare
+	 */
+	public compare(a: any, b: any) {
+		if (a > b) {
+			return 1;
+		} else if (b > a) {
+			return -1;
+		} else {
+			return 0;
+		}
+	}
+
+	/**
 	 * Check if variable is an instance of this type
 	 */
-	public is(variable) {
-		return ((typeof variable).toLowerCase() === this.safe) || (variable instanceof this.$constructor);
+	public is(variable: any) {
+		return ((typeof variable).toLowerCase() === this.safe) || (variable && (variable instanceof this.__constructor));
 	}
 
 	/**
 	 * Check if constructor matches
 	 */
-	public match(constructor) {
-		return constructor === this.$constructor;
+	public match(constructor: any) {
+		return constructor === this.__constructor;
 	}
 }

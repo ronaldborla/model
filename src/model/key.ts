@@ -1,6 +1,9 @@
-import { Schema } from './schema';
-import { Type		} from './type';
-
+import { __ 				} from './config';
+import { Collection } from './collection';
+import { Model  		} from './model';
+import { Schema 		} from './schema';
+import { Type				} from './type';
+import { utils 			} from './utils';
 
 /**
  * Model Key class
@@ -15,12 +18,17 @@ export class Key {
 	/**
 	 * Default value
 	 */
-	public default: any = null;
+	public default: any = utils.undefined;
 
 	/**
 	 * Key name
 	 */
 	public name: string = null;
+
+	/**
+	 * Key options
+	 */
+	public options: any = utils.undefined;
 
 	/**
 	 * The schema
@@ -43,7 +51,8 @@ export class Key {
 	constructor(schema: Schema, name: string, key: any) {
 		this.schema = schema;
 		this.name = name;
-		this.default = key.default || null;
+		this.default = key.default;
+		this.options = key.options;
 		this.type = key.type || key;
 	}
 
@@ -56,45 +65,51 @@ export class Key {
 		}
 		let key = this,
 				name = this.name,
-				utils = this.schema.utils;
+				schema = this.schema;
 		// Fix type
 		if (!(this.type instanceof Type)) {
-			this.type = this.schema.model.type(this.type);
+			this.type = schema.model.type(this.type);
 		}
 		// Define attribute
-		Object.defineProperty(this.schema.$constructor.prototype, name, {
+		Object.defineProperty(schema.__constructor.prototype, name, {
 			get: function() {
-				let value = this.$attributes[name],
-						mutator = this.constructor.$cache.mutators.get[name];
-				if (utils.isUndefined(mutator)) {
-					let fn = utils.camelCase(['get', name, 'attribute'].join(' '));
-					mutator = 
-						this.constructor.$cache.mutators.get[name] =
-						utils.isFunction(this[fn]) ? fn : null;
-				}
-				if (mutator !== null) {
-					value = this[mutator].apply(this, [value]);
-				}
-				return value;
+				return callMutator.apply(this, ['get', this[__].attributes[name]]);
 			},
 			set: function(value) {
-				var prev = this.$attributes[name];
-				// Evaluate
-				// !! Use mutator here
-				value = key.evaluate(value, this);
-				this.$attributes[name] = value;
-				return this;
+				let previous = this[__].attributes[name];
+				value = setParent(key.type.cast(value, key.options), this);
+				this[__].attributes[name] = value = callMutator.apply(this, ['set', value]);
+				return this.fire('setAttribute', [name, value, previous]);
 			}
 		});
 		this.booted = true;
 		return this;
-	}
 
-	/**
-	 * Evaluate 
-	 */
-	public evaluate(value: any, model: any) {
-		value = this.type.convert(value);
-		return value;
+		/**
+		 * Call mutator
+		 */
+		function callMutator(method: string, value: any) {
+			let mutator = schema.cache.mutators[method][name];
+			if (utils.isUndefined(mutator)) {
+				let fn = utils.camelCase([method, name, 'attribute'].join(' '));
+				mutator = 
+					schema.cache.mutators[method][name] =
+					utils.isFunction(this[fn]) ? fn : null;
+			}
+			if (mutator !== null) {
+				value = this[mutator].apply(this, [value]);
+			}
+			return value;
+		}
+
+		/**
+		 * Set Model or Collection parent
+		 */
+		function setParent(value, model) {
+			if (value && ((value instanceof Model) || (value instanceof Collection))) {
+				value[__].parent = model;
+			}
+			return value;
+		}
 	}
 }
