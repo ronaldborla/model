@@ -68,6 +68,14 @@ describe('Users', function() {
 			assert.instanceOf(users[0], User);
 		});
 	});
+	describe('#first', function() {
+		it('should be an instance of `User`', function() {
+			assert.instanceOf(users.first, User);
+		});
+		it('should be equal to first item in collection', function() {
+			assert.strictEqual(users.first, users[0]);
+		});
+	});
 	describe('#first_names', function() {
 		it('should be an array of strings', function() {
 			assert.typeOf(users.first_names[0], 'string');
@@ -80,12 +88,12 @@ describe('Users', function() {
 	});
 	describe('#load()', function() {
 		it('should be a function', function() {
-			assert.isOk(modeljs.utils.isFunction(users.load));
+			assert.isFunction(users.load);
 		});
 	});
 	describe('#toObject()', function() {
 		it('should be a function', function() {
-			assert.isOk(modeljs.utils.isFunction(users.toObject));
+			assert.isFunction(users.toObject);
 		});
 		it('should return an array', function() {
 			assert.isOk(Array.isArray(users.toObject()));
@@ -101,7 +109,7 @@ describe('Users', function() {
 	});
 	describe('#toJSON()', function() {
 		it('should be a function', function() {
-			assert.isOk(modeljs.utils.isFunction(users.toJSON));
+			assert.isFunction(users.toJSON);
 		});
 		it('should return a string', function() {
 			assert.typeOf(users.toJSON(), 'string');
@@ -109,7 +117,7 @@ describe('Users', function() {
 	});
 	describe('#toString()', function() {
 		it('should be a function', function() {
-			assert.isOk(modeljs.utils.isFunction(users.toString));
+			assert.isFunction(users.toString);
 		});
 		it('should return a string', function() {
 			assert.typeOf(users.toString(), 'string');
@@ -123,7 +131,7 @@ describe('Users', function() {
 	});
 	describe('#mapAttribute()', function() {
 		it('should be a function', function() {
-			assert.isOk(modeljs.utils.isFunction(users.mapAttribute));
+			assert.isFunction(users.mapAttribute);
 		});
 		it('should return an array of numbers if `id` is passed as parameter', function() {
 			assert.typeOf((users.mapAttribute('id') || [])[0], 'number');
@@ -144,7 +152,7 @@ describe('Users', function() {
 	});
 	describe('#sortByAttribute()', function() {
 		it('should be a function', function() {
-			assert.isOk(modeljs.utils.isFunction(users.sortByAttribute));
+			assert.isFunction(users.sortByAttribute);
 		});
 		it('should return an instance of `Array`', function() {
 			users.sortByAttribute('profile.first_name');
@@ -157,6 +165,14 @@ describe('Users', function() {
 		it('should return first item `username` with second parameter `-1` as `' + data[0].username + '`', function() {
 			users.sortByAttribute('username', -1);
 			assert.strictEqual(users[0].getAttribute('username'), data[0].username);
+		});
+		it('should return first item `profile.sex` as `female`', function() {
+			users.sortByAttribute('profile.sex');
+			assert.equal(users[0].getAttribute('profile.sex'), 'female');
+		});
+		it('should return first item `profile.first_name` as `' + data[1].profile.first_name + '` if `profile` and `-1` are passed as parameters', function() {
+			users.sortByAttribute('profile', -1);
+			assert.strictEqual(users[0].getAttribute('profile.first_name'), data[1].profile.first_name);
 		});
 	});
 	describe('#concat()', function() {

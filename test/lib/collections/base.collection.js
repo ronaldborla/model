@@ -14,6 +14,11 @@ schema.methods.mapAttribute 		= mapAttribute;
 schema.methods.sortByAttribute 	= sortByAttribute;
 
 /**
+ * Virtuals
+ */
+schema.virtuals.first = getFirst;
+
+/**
  * Register Base collection
  */
 modeljs.collection('BaseCollection', schema);
@@ -29,6 +34,13 @@ function BaseCollection(data) {
 }
 
 /**
+ * Get first in array
+ */
+function getFirst() {
+	return this[0];
+}
+
+/**
  * Map attribute
  */
 function mapAttribute(attribute) {
@@ -41,12 +53,13 @@ function mapAttribute(attribute) {
  * Sort collection by attribute
  */
 function sortByAttribute(attribute, order) {
-	var type = this.type;
 	if (modeljs.utils.isUndefined(order)) {
 		order = 1;
 	}
 	this.sort(function(a, b) {
-		return type.compare(a.getAttribute(attribute), b.getAttribute(attribute)) * order;
+		var left = a.getAttribute(attribute),
+				right = b.getAttribute(attribute);
+		return left.constructor.type.compare(left, right) * order;
 	});
 	return this;
 }

@@ -15,6 +15,7 @@ var schema = new modeljs.Schema(Base, {
 /**
  * Methods
  */
+schema.methods.compare 			= compare;
 schema.methods.getAttribute = getAttribute;
 
 /**
@@ -30,6 +31,13 @@ modeljs.model('Base', schema);
 function Base(data) {
 	schema.super(this, 'constructor', arguments);
 	this.load(data);
+}
+
+/**
+ * Compare models
+ */
+function compare(model) {
+	return (this.id || 0) - (model.id || 0);
 }
 
 /**

@@ -173,7 +173,8 @@ export class Schema {
 			'__constructor',
 			'__name',
 			'inherits',
-			'schema'
+			'schema',
+			'type'
 		]);
 		// Define properties
 		utils.forEach(this.methods, (value, key, object) => {

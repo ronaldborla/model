@@ -7,6 +7,7 @@ users.push({
 	added: 		new Date(),
 	id: 			2,
 	profile: {
+		id: 2,
 		first_name: 'Jane',
 		last_name: 	'Doe',
 		sex: 				'female'

@@ -70,10 +70,12 @@ class Utils {
 		let utils = this;
 		return function(name: string, args: any, source?: any) {
 			if (!utils.isUndefined((this[__].listeners || {})[name])) {
-				if (!utils.isUndefined(source)) {
-					args = (args || []).slice();
-					args.push(source);
-				}
+				let e = { 
+					name: name,
+					source: utils.isUndefined(source) ? this : source
+				};
+				args = (args || []).slice();
+				args.unshift(e);
 				(this[__].listeners[name] || []).forEach((callback) => {
 					callback.apply(this, args || []);
 				});

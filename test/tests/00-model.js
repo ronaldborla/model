@@ -98,12 +98,12 @@ describe('User', function() {
 	});
 	describe('#load()', function() {
 		it('should be a function', function() {
-			assert.isOk(modeljs.utils.isFunction(user.load));
+			assert.isFunction(user.load);
 		});
 	});
 	describe('#toObject()', function() {
 		it('should be a function', function() {
-			assert.isOk(modeljs.utils.isFunction(user.toObject));
+			assert.isFunction(user.toObject);
 		});
 		it('should return `profile.full_name` as `' + full_name + '`', function() {
 			assert.strictEqual((user.toObject().profile || {}).full_name, full_name);
@@ -114,7 +114,7 @@ describe('User', function() {
 	});
 	describe('#toJSON()', function() {
 		it('should be a function', function() {
-			assert.isOk(modeljs.utils.isFunction(user.toJSON));
+			assert.isFunction(user.toJSON);
 		});
 		it('should return a string', function() {
 			assert.typeOf(user.toJSON(), 'string');
@@ -122,7 +122,7 @@ describe('User', function() {
 	});
 	describe('#toString()', function() {
 		it('should be a function', function() {
-			assert.isOk(modeljs.utils.isFunction(user.toString));
+			assert.isFunction(user.toString);
 		});
 		it('should return a string', function() {
 			assert.typeOf(user.toString(), 'string');
@@ -136,7 +136,7 @@ describe('User', function() {
 	});
 	describe('#getAttribute()', function() {
 		it('should be a function', function() {
-			assert.isOk(modeljs.utils.isFunction(user.getAttribute));
+			assert(user.getAttribute);
 		});
 		it('should return `' + data.username + '` if `username` is passed as a parameter', function() {
 			assert.strictEqual(user.getAttribute('username'), data.username);

@@ -74,10 +74,12 @@ var Utils = /** @class */ (function () {
         return function (name, args, source) {
             var _this = this;
             if (!utils.isUndefined((this[__].listeners || {})[name])) {
-                if (!utils.isUndefined(source)) {
-                    args = (args || []).slice();
-                    args.push(source);
-                }
+                var e = {
+                    name: name,
+                    source: utils.isUndefined(source) ? this : source
+                };
+                args = (args || []).slice();
+                args.unshift(e);
                 (this[__].listeners[name] || []).forEach(function (callback) {
                     callback.apply(_this, args || []);
                 });
@@ -454,7 +456,9 @@ var Type = /** @class */ (function () {
         this.__constructor = null;
         this.name = name + '';
         this.safe = this.name.toLowerCase();
+        constructor.type = this;
         this.__constructor = constructor;
+        this.has_compare = utils.isFunction(this.__constructor.prototype.compare);
     }
     /**
      * Cast a variable into this type
@@ -469,6 +473,9 @@ var Type = /** @class */ (function () {
      * Compare
      */
     Type.prototype.compare = function (a, b) {
+        if (this.has_compare) {
+            return a.compare(b);
+        }
         if (a > b) {
             return 1;
         }
@@ -751,7 +758,8 @@ var Schema = /** @class */ (function () {
             '__constructor',
             '__name',
             'inherits',
-            'schema'
+            'schema',
+            'type'
         ]);
         // Define properties
         utils.forEach(this.methods, function (value, key, object) {

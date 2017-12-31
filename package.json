@@ -12,7 +12,7 @@
     "build": "npm run softbuild && npm run uglify",
     "softbuild": "rollup -c && npm run beep",
     "start": "npm run watch",
-    "test": "mocha -R list test/index && npm run beep",
+    "test": "mocha test/index && npm run beep",
     "uglify": "uglifyjs dist/model.js --output dist/model.min.js && npm run beep",
     "watch": "concurrently -c 'green,yellow' -n 'script,test' 'npm run watch:script' 'npm run watch:test'",
     "watch:test": "nodemon -e html,js --ignore dist/ --ignore node_modules/ --ignore src/ -x 'npm run test'",

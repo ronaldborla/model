@@ -26,7 +26,9 @@ export class Type {
 	constructor(name: string, constructor: any) {
 		this.name = name + '';
 		this.safe = this.name.toLowerCase();
+		constructor.type = this;
 		this.__constructor = constructor;
+		this.has_compare = utils.isFunction(this.__constructor.prototype.compare);
 	}
 
 	/**
@@ -43,6 +45,9 @@ export class Type {
 	 * Compare
 	 */
 	public compare(a: any, b: any) {
+		if (this.has_compare) {
+			return a.compare(b);
+		}
 		if (a > b) {
 			return 1;
 		} else if (b > a) {
