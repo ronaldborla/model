@@ -1,1693 +1,1069 @@
+(function (global, factory) {
+	typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports) :
+	typeof define === 'function' && define.amd ? define(['exports'], factory) :
+	(factory((global.window = global.window || {})));
+}(this, (function (exports) { 'use strict';
+
+function __extends(d, b) {
+    for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
+    function __() { this.constructor = d; }
+    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+}
+
+var __ = '__private__';
 
 /**
- * Define Model
+ * Model utilities
  */
-window.Model = (function(window, undefined) {
-  'use strict';
-
-  /**
-   * JS Model
-   * @param schema The model schema
-   * @param define Callback to define the methods 
-   * @return The constructor of the new Model
-   */
-  var Model = function(schema, define) {
-
-    // The constructor and the methods
-    var Constructor = null,
-        methods = {},
-        virtuals = {},
-        statics = {},
-        utils = Model.utils;
-
-    // Set $
-    var $ = utils.$;
-
+var Utils = /** @class */ (function () {
     /**
-     * Get attr
+     * The constructor
      */
-    var attr = function(self) {
-      // Return
-      return $(self).attributes;
-    };
-
+    function Utils() {
+        this.undefined = (function (undefined) {
+            return undefined;
+        })();
+    }
     /**
-     * Construct the object
-     * This sets default values for the attributes
+     * To camel case
      */
-    var construct = function(self, args) {
-      // Create attributes
-      $(self).attributes = {};
-      // Create listeners
-      $(self).listeners = {};
-      // Loop through schema
-      self.schema.forEach(function(key) {
-        // Only if default is defined
-        if (key.hasDefault()) {
-          // Set default value
-          self[key.name] = key.getDefault(self);
-        }
-      });
-      // Return self
-      return self;
-    };
-
-    /**
-     * Get attribute
-     */
-    methods.get = function(name) {
-      // Return attribute
-      return attr(this)[name];
-    };
-
-    /**
-     * Set attribute
-     */
-    methods.set = function(name, value) {
-      // The key
-      var key = this.schema.get(name),
-          // This attributes
-          attributes = attr(this),
-          // Previous
-          previous = attributes[name];
-      // Create
-      attributes[name] = key.evaluate(value, this);
-      // If result is an object
-      if (attributes[name] && typeof attributes[name] === 'object') {
-        // Set its parent
-        utils.$(attributes[name]).parent = this;
-      }
-      // Call set attribute
-      this.fire('setAttribute', [name, attributes[name], previous]);
-      // Set specific attribute
-      this.fire('set' + utils.ucfirst(name) + 'Attribute', [attributes[name], previous]);
-      // If changed
-      if (utils.typeCompare(key.type, attributes[name], previous)) {
-        // Change
-        this.change();
-      }
-      // Return self
-      return this;
-    };
-
-    // Set define
-    methods.define = utils.define;
-    // Set on
-    methods.on = utils.on;
-    // Set fire
-    methods.fire = utils.fire;
-    // Set emit
-    methods.emit = utils.emit;
-    // Set change
-    methods.change = utils.change;
-    // Set throw
-    methods.throw = utils.throw;
-
-    /**
-     * Load data
-     * @param data The data to load
-     */
-    methods.load = function(data) {
-      // The object
-      var self = this;
-      // If there's data
-      if (utils.isDefined(data)) {
-        // Loop through schema
-        this.schema.forEach(function(key) {
-          // If data is defined
-          if (utils.isDefined(data[key.name])) {
-            // Set data
-            self[key.name] = data[key.name];
-          }
+    Utils.prototype.camelCase = function (str) {
+        return str.replace(/[-_]+/g, ' ').replace(/(?:^\w|[A-Z]|\b\w|[\s-_]+)/g, function (match, index) {
+            if (+match === 0) {
+                return ''; // or if (/\s+/.test(match)) for white spaces
+            }
+            return index === 0 ? match.toLowerCase() : match.toUpperCase();
         });
-        // Call load
-        this.fire('load');
-      }
-      // Return self
-      return this;
     };
-
     /**
-     * Constructor is a Model
+     * Emit an event
      */
-    statics.isModel = true;
-
-    /**
-     * Inherit the Model
-     */
-    statics.inherit = function(extendSchema, defineModel) {
-      // Parent schema
-      var parentSchema = this.prototype.schema,
-          // The child schema
-          childSchema = parentSchema.export(extendSchema),
-          // Define methods
-          methods = {},
-          virtuals = {},
-          statics = {};
-      // Inherit
-      return utils.inherit(parentSchema.Constructor, function(construct) {
-        // Use defineModel
-        return defineModel(construct, methods, virtuals, statics);
-        // Define prototype
-      }, function(proto, Constructor) {
-        // Override schema
-        proto.schema = new Model.Schema(Constructor, childSchema, parentSchema);
-        // Extend
-        return utils.extendConstructor(Constructor, methods, virtuals, statics);
-      });
-    };
-
-    // If define is a callback
-    if (utils.isFunction(define)) {
-      // Call define and get the constructor
-      Constructor = define(construct, methods, virtuals, statics);
-    }
-
-    // If Constructor is not a function
-    if (!utils.isFunction(Constructor)) {
-      // Create a default constructor
-      Constructor = function Model(data) {
-        // Do construct and load
-        construct(this).load(data);
-      };
-    }
-
-    // Initialize schema
-    Constructor.prototype.schema = new Model.Schema(Constructor, schema);
-
-    // Extend and return Constructor 
-    return utils.extendConstructor(Constructor, methods, virtuals, statics);
-  };
-
-  // Return Model
-  return Model;
-
-  // Inject window
-})(window);
-
-
-/**
- * Common utilities
- */
-(function(window, Model, undefined) {
-  'use strict';
-
-  // Utils
-  var utils = {};
-
-  /**
-   * The sign
-   */
-  utils.sign = '__local__';
-
-  /**
-   * Type order
-   */
-  utils.typeOrder = [
-    'Boolean',
-    'Number',
-    'String',
-    'Date',
-    'Array',
-    'Model',
-    'Collection',
-    'Object'
-  ];
-
-  /**
-   * Is defined
-   */
-  utils.isDefined = function(variable) {
-    // Return
-    return variable !== undefined;
-  };
-
-  /**
-   * Is undefined
-   */
-  utils.isUndefined = function(variable) {
-    // Return
-    return !utils.isDefined(variable);
-  };
-
-  /**
-   * Check if function
-   */
-  utils.isFunction = function(object) {
-    // Return
-    return !!(object && object.constructor && object.call && object.apply);
-  };
-
-  /**
-   * Check if instance
-   */
-  utils.is = function(type, value) {
-    // Set type as name
-    type = type.name || type;
-    // Return
-    return Model.Schema.Types[type] && 
-           Model.Schema.Types[type].is(value);
-  };
-
-  /**
-   * Check if inherits
-   */
-  utils.inherits = function(type, Constructor) {
-    // Set type as name
-    type = type.name || type;
-    // Return
-    return Model.Schema.Types[type] && 
-           Model.Schema.Types[type].inherits(Constructor);
-  };
-
-  /**
-   * Sort
-   */
-  utils.sort = function(array, descending) {
-    // Return
-    array.sort(function(a, b) {
-      // Return
-      return !!descending ? (b - a) : (a - b);
-    });
-    // Return the array
-    return array;
-  };
-
-  /**
-   * Get keys
-   */
-  utils.keys = function(object, sort) {
-    // Return
-    var keys = window.Object.keys(object);
-    // If there's sort
-    if (typeof sort !== 'undefined') {
-      // Sort
-      utils.sort(keys, !sort);
-    }
-    // Return keys
-    return keys;
-  };
-
-  /**
-   * Get type
-   */
-  utils.type = function(value) {
-    // Loop
-    for (var i = 0; i < utils.typeOrder.length; i++) {
-      // The type
-      var type = Model.Schema.Types[utils.typeOrder[i]];
-      // If match
-      if (type.is(value)) {
-        // Return type
-        return type;
-      }
-    }
-    // Return nothing
-    return Model.Schema.Types.Any;
-  };
-
-  /**
-   * Compare variables
-   */
-  utils.compare = function(a, b, deep, level) {
-    // Get the types
-    var aType = utils.type(a),
-        bType = utils.type(b);
-    // If types do not match
-    if (aType.name !== bType.name) {
-      // Return true
-      return true;
-    }
-    // Return compare
-    return utils.typeCompare(aType, a, b, deep, level);
-  };
-
-  /**
-   * Type compare
-   */
-  utils.typeCompare = function(type, a, b, deep, level) {
-    // If doesn't match type
-    if (!type.is(a) || !type.is(b)) {
-      // Return true
-      return true;
-    }
-    // Compare
-    return type.compare(a, b, deep, level);
-  };
-
-  /**
-   * Loop over object
-   */
-  utils.forEach = function(object, callback) {
-    // Apply relationships
-    for (var o in object) {
-      // If has own property
-      if (object.hasOwnProperty(o)) {
-        // Call
-        if (callback.apply(object, [object[o], o, object]) === false) {
-          // Return
-          return false;
-        }
-      }
-    }
-    // True to signify loop completed
-    return true;
-  };
-
-  /**
-   * Extend object
-   */
-  utils.extend = function(left, right) {
-    // Loop through right
-    utils.forEach(right, function(value, name) {
-      // Put to left
-      left[name] = value;
-    });
-    // Return a
-    return left;
-  };
-
-  /**
-   * Uppercase first letter
-   */
-  utils.ucfirst = function(string) {
-    // Return
-    return string[0].toUpperCase() + string.substr(1);
-  };
-
-  /**
-   * Inherit a Constructor
-   */
-  utils.inherit = function(Parent, getConstructor, definePrototype) {
-    // The construct function
-    var construct = function(child, args) {
-      // Apply parent
-      Parent.apply(child, args || []);
-      // Return
-      return child;
-    };
-    // Get constuctor
-    var Constructor = getConstructor(construct);
-    // Inherit prototype (use Object.create instead of 'new' keyword to omit execution of constructor)
-    Constructor.prototype = window.Object.create(Parent.prototype);
-    // Correct constructor
-    Constructor.prototype.constructor = Constructor;
-    // Extend any constructor methods
-    utils.extend(Constructor, Parent);
-    // If method
-    if (utils.isFunction(definePrototype)) {
-      // Define prototype
-      definePrototype(Constructor.prototype, Constructor);
-    }
-    // Return constructor
-    return Constructor;
-  };
-
-  /**
-   * Extend constructor
-   */
-  utils.extendConstructor = function(Constructor, methods, virtuals, statics) {
-    // The prototype
-    var proto = Constructor.prototype;
-    // Initialize
-    methods = methods || {};
-    virtuals = virtuals || {};
-    statics = statics || {};
-    /**
-     * Extend methods to prototype
-     */
-    utils.extend(proto, methods);
-    /**
-     * Define virtuals
-     */
-    utils.forEach(virtuals, function(method, name) {
-      // Define
-      utils.define.apply(proto, [name, {
-        // Get only since virtuals are read-only
-        get: method
-      }]);
-    });
-    /**
-     * Extend statics to constructor
-     */
-    utils.extend(Constructor, statics);
-    // Return Constructor
-    return Constructor;
-  };
-
-  /**
-   * Check if has sign
-   */
-  utils.hasSign = function(self) {
-    // Return
-    return utils.isDefined(self[utils.sign]);
-  };
-
-  /**
-   * The private constructor variables
-   */
-  utils.$ = function(self) {
-    // If there's no $
-    if (!utils.hasSign(self)) {
-      // Set it
-      self[utils.sign] = {};
-    }
-    // Return
-    return self[utils.sign];
-  };
-
-  /**
-   * Get listeners
-   */
-  utils.events = function(self) {
-    // If undefined
-    if (utils.isUndefined(utils.$(self).listeners)) {
-      // Set it
-      utils.$(self).listeners = {};
-    }
-    // Return
-    return utils.$(self).listeners;
-  };
-
-  /**
-   * Define a property
-   */
-  utils.define = function(name, definition) {
-    // Use defineProperty
-    window.Object.defineProperty(this, name, definition);
-    // Return self
-    return this;
-  };
-
-  /**
-   * Listen to an event
-   */
-  utils.on = function(event, callback) {
-    // Get listeners
-    var listeners = utils.events(this);
-    // If there are no listeners
-    if (!utils.is('Array', listeners[event])) {
-      // Create empty
-      listeners[event] = [];
-      // Set counter
-      listeners[event].count = 0;
-    }
-    // Make sure callback is a function
-    if (utils.isFunction(callback)) {
-      // Set listener index
-      callback.index = listeners[event].count;
-      // Push
-      listeners[event].push(callback);
-      // Increment count
-      listeners[event].count++;
-    }
-    // Return a method that destroys the listener
-    return function() {
-      // Loop through listeners
-      for (var i = 0; i < listeners[event].length; i++) {
-        // If found
-        if (listeners[event][i].index === callback.index) {
-          // Splice
-          listeners[event].splice(i, 1);
-          // Quit loop
-          break;
-        }
-      }
-    };
-  };
-
-  /**
-   * Fire an event
-   */
-  utils.fire = function(event, args) {
-    // Set self
-    var self = this,
-        listeners = utils.events(this);
-    // Check if there are listeners
-    if (utils.is('Array', listeners[event])) {
-      // Loop through listeners
-      listeners[event].forEach(function(listener) {
-        // Call it
-        listener.apply(self, args || []);
-      });
-    }
-    // Return self
-    return this;
-  };
-
-  /**
-   * Emit an event (upwards)
-   * Emitting an event fires the event up to the root parent
-   */
-  utils.emit = function(event, args) {
-    // Set parent
-    var parent = this, 
-        // Source stack is the stack of source models
-        sourceStack = [this];
-    // If there's no args
-    if (!utils.is('Array', args)) {
-      // Create empty array
-      args = [];
-    }
-    // Source index is last
-    var sourceIndex = args.length;
-    // Push source stack
-    args.push(sourceStack);
-    // We're firing events up to the root parent
-    while (true) {
-      // Fire event
-      parent.fire(event, [args]);
-      // If there's parent and the parent has a fire event
-      if (utils.isDefined(utils.$(parent).parent) && utils.isFunction(utils.$(parent).parent.fire)) {
-        // Set new parent
-        parent = utils.$(parent).parent;
-        // Push source stack
-        sourceStack.push(parent);
-      } else {
-        // Break
-        break;
-      }
-    }
-    // Return
-    return this;
-  };
-
-  /**
-   * Model has changed
-   */
-  utils.change = function() {
-    // Use emit to let parents know about the change
-    this.emit('change');
-  };
-
-  /**
-   * Throw an error
-   */
-  utils.throw = function(message) {
-    // Throw it
-    Model.Exception.prototype.throw.apply(this, [message]);
-  };
-
-  // Set utils
-  Model.utils = utils;
-
-  // Inject window and Model
-})(window, window.Model);
-
-
-/**
- * Define Collection
- */
-(function(window, Model, utils, undefined) {
-  'use strict';
-
-  /**
-   * Collection
-   * Collection of Models
-   */
-  var Collection = function(ModelConstructor, define) {
-    // Model constructor must be a model
-    if (!utils.inherits('Model', ModelConstructor)) {
-      // Throw error
-      utils.throw('Constructor must inherit the Model constructor');
-    }
-
-    // The constructor and the methods
-    var Constructor = null,
-        methods = {},
-        virtuals = {},
-        statics = {},
-        Arr = window.Array.prototype,
-        call = function(method, array, args) {
-          // Return
-          return Arr[method].call(array, args || []);
-        },
-        apply = function(method, array, args) {
-          // Return
-          return Arr[method].apply(array, args || []);
+    Utils.prototype.emit = function () {
+        var utils = this;
+        return function (name, args, source) {
+            if (utils.isUndefined(source)) {
+                source = this;
+            }
+            this.fire(name, args, source);
+            if (!utils.isUndefined(this[__].parent) && utils.isFunction(this[__].parent.emit)) {
+                this[__].parent.emit(name, args, source);
+            }
+            if (!utils.isUndefined(this[__].collection) && utils.isFunction(this[__].collection.emit)) {
+                this[__].collection.emit(name, args, source);
+            }
+            return this;
         };
-
-    // Set $
-    var $ = utils.$;
-
-    /**
-     * Construct the object
-     * This sets default values for the attributes
-     */
-    var construct = function(self) {
-      // Create listeners
-      $(self).listeners = {};
-      // Return self
-      return self;
     };
-
-    // Set define
-    methods.define = utils.define;
-    // Set on
-    methods.on = utils.on;
-    // Set fire
-    methods.fire = utils.fire;
-    // Set emit
-    methods.emit = utils.emit;
-    // Set change
-    methods.change = utils.change;
-    // Set throw
-    methods.throw = utils.throw;
-
-    // If define is a callback
-    if (utils.isFunction(define)) {
-      // Call define and get the constructor
-      Constructor = define(construct, methods, virtuals, statics);
-    }
-
-    // If Constructor is not a function
-    if (!utils.isFunction(Constructor)) {
-      // Create a default constructor
-      Constructor = function Collection(data) {
-        // Do construct and load
-        construct(this).load(data);
-      };
-    }
-
     /**
-     * Constructor is a collection
+     * Extend
      */
-    statics.isCollection = true;
-    
-    // Unlike in a Model, we don't want to execute Array's default constructor
-    return utils.inherit(window.Array, function() {
-      // Return Constructor
-      return Constructor;
-      // Define prototype
-    }, function(proto, Collection) {
-
-      /**
-       * Set ModelConstructor
-       */
-      proto.Model = ModelConstructor;
-
-      /**
-       * Convert item to Model
-       */
-      proto.convert = function(item) {
-        // If not an instance of Constructor
-        if (!(item instanceof this.Model)) {
-          // Create
-          item = new this.Model(item);
-        }
-        // Set parent
-        utils.$(item).parent = this;
-        // Return item
-        return item;
-      };
-
-      /**
-       * Load data
-       */
-      proto.load = function(items) {
-        // Empty first
-        this.length = 0;
-        // Push data
-        this.push.apply(this, items);
-        // Return self
-        return this;
-      };
-
-      /**
-       * Override push
-       */
-      proto.push = function() {
-        // Self
-        var self = this;
-        // Push arguments
-        return apply('push', this, call('slice', arguments || {}).map(function(arg) {
-          // Return
-          return self.convert(arg);
-        }));
-      };
-
-      /**
-       * Override fill
-       */
-      proto.fill = function() {
-        // If there's first argument
-        if (utils.isDefined(arguments[0])) {
-          // Convert
-          arguments[0] = this.convert(arguments[0]);
-        }
-        // Apply
-        return apply('fill', this, arguments);
-      };
-
-      /**
-       * Override splice
-       */
-      proto.splice = function() {
-        // Get args
-        var args = call('slice', arguments || {});
-        // If length is greater than 2
-        if (args.length > 2) {
-          // Loop through args
-          for (var i = 2; i < args.length; i++) {
-            // Convert each
-            args[i] = this.convert(args[i]);
-          }
-        }
-        // Return
-        return apply('splice', this, args);
-      };
-
-      /**
-       * Override unshift
-       */
-      proto.unshift = function() {
-        // Self
-        var self = this;
-        // Push arguments
-        return apply('unshift', this, call('slice', arguments || {}).map(function(arg) {
-          // Return
-          return self.convert(arg);
-        }));
-      };
-
-      // Extend Constructor
-      return utils.extendConstructor(Collection, methods, virtuals, statics);
-    });
-  };
-
-  // Set Collection
-  Model.Collection = Collection;
-
-  // Inject window, Model, and utils
-})(window, window.Model, window.Model.utils);
-
-
-/**
- * Define Exception
- */
-(function(window, Model, utils, undefined) {
-  'use strict';
-
-  /**
-   * The Exception
-   */
-  var Exception = utils.inherit(window.Error, function(construct) {
-    // Return Constructor
-    return function Exception(message, source) {
-      // Construct
-      var self = construct(this);
-
-      // Set message
-      this.message = message;
-      // Set source
-      this.source = source;
-      // Set stack
-      this.stack = (new Error()).stack;
-    };
-  });
-
-  /**
-   * Throw error
-   */
-  Exception.prototype.throw = function(message) {
-    // Throw error
-    throw new Exception(message, this);
-  };
-
-  // Set Exception
-  Model.Exception = Exception;
-
-  // Inject Model
-})(window, window.Model, window.Model.utils);
-
-
-/**
- * Define Schema
- */
-(function(window, Model, utils, undefined) {
-  'use strict';
-
-  /**
-   * The Schema
-   * Inherit Array
-   */
-  var Schema = utils.inherit(window.Array, function(construct) {
-    // Return Constructor
-    return function Schema(Constructor, schema, parent) {
-      // Self
-      var self = construct(this);
-
-      // This Constructor
-      this.Constructor = Constructor;
-      // Parent schema
-      this.parent = parent || null;
-
-      // If there's schema
-      if (utils.isDefined(schema)) {
-        // Loop
-        utils.forEach(schema, function(definition, name) {
-          // Set it
-          self.set(name, definition);
+    Utils.prototype.extend = function (left, right, ignore) {
+        var _this = this;
+        this.forEach(right, function (value, name) {
+            if (_this.isUndefined(ignore) || ignore.indexOf(name) < 0) {
+                left[name] = value;
+            }
         });
-      }
+        return left;
     };
-    // Define prototype
-  }, function(proto, Schema) {
-
     /**
-     * Get schema
+     * Fire an event
      */
-    proto.get = function(name) {
-      // Set index
-      var index = -1;
-      // Check for index
-      if (!utils.isDefined(this.index)) {
-        // Set index
-        this.index = {};
-      }
-      // If index is defined
-      if (utils.isDefined(this.index[name])) {
-        // Set index
-        index = this.index[name];
-      }
-      // If there's no index
-      if (index <= 0) {
-        // Find
-        for (var i = 0; i < this.length; i++) {
-          // Match name
-          if (this[i].name === name) {
-            // Put into index
-            this.index[name] = index = i;
-            break;
-          }
+    Utils.prototype.fire = function () {
+        var utils = this;
+        return function (name, args, source) {
+            var _this = this;
+            if (!utils.isUndefined((this[__].listeners || {})[name])) {
+                var e = {
+                    name: name,
+                    source: utils.isUndefined(source) ? this : source
+                };
+                args = (args || []).slice();
+                args.unshift(e);
+                (this[__].listeners[name] || []).forEach(function (callback) {
+                    callback.apply(_this, args || []);
+                });
+            }
+            return this;
+        };
+    };
+    /**
+     * Flatten ignore
+     */
+    Utils.prototype.flattenIgnore = function (ignore) {
+        var _this = this;
+        var flattened = {
+            __flattened: true
+        };
+        if (!this.isUndefined(ignore)) {
+            var child_keys_1 = [];
+            (ignore || []).forEach(function (attribute) {
+                var pos = attribute.indexOf('.'), left = (pos >= 0) ? attribute.substr(0, pos) : attribute, right = (pos >= 0) ? attribute.substr(pos + 1) : '';
+                if (right) {
+                    if (_this.isUndefined(flattened[left])) {
+                        flattened[left] = [];
+                    }
+                    if (flattened[left] !== true) {
+                        if (child_keys_1.indexOf(left) < 0) {
+                            child_keys_1.push(left);
+                        }
+                        flattened[left].push(right);
+                    }
+                }
+                else {
+                    flattened[left] = true;
+                }
+            });
+            child_keys_1.forEach(function (key) {
+                if (flattened[key] !== true) {
+                    flattened[key] = _this.flattenIgnore(flattened[key]);
+                }
+            });
         }
-      }
-      // Return key
-      return this[index];
+        return flattened;
     };
-
     /**
-     * Set Schema
-     * Translate from raw schema
+     * Foreach
      */
-    proto.set = function(name, definition) {
-      // Push translated
-      this.push(new Schema.Key(this, name, definition));
-    };
-
-    /**
-     * Export Schema
-     */
-    proto.export = function(extend) {
-      // All keys
-      var json = {};
-      // Loop through keys
-      this.forEach(function(key) {
-        // Add to json
-        json[key.name] = key.export();
-      });
-      // Return
-      return utils.extend(json, extend || {});
-    };
-
-  });
-
-  // Set Schema
-  Model.Schema = Schema;
-
-  // Inject window, Model, and utils
-})(window, window.Model, window.Model.utils);
-
-
-/**
- * Define Type
- */
-(function(window, Model, utils, undefined) {
-  'use strict';
-
-  /**
-   * Property Type
-   */
-  var Type = function(name, Constructor, native) {
-    // Self
-    var self = this;
-    // Set it
-    this.name = name;
-    // Raw type
-    this.raw = (name || '').toLowerCase();
-    // Set Constructor
-    this.Constructor = Constructor || null;
-    // Type is native
-    this.native = !!native;
-    // Original type
-    this.original = null;
-  };
-
-  // Check if constructor matches
-  Type.prototype.match = function(check) {
-    // If check is instance of Self
-    if (check instanceof (this.prototype || this).constructor) {
-      // Return match
-      return this.match(check.name);
-    }
-    // Match
-    var match = 'Constructor';
-    // If string
-    if (utils.is('String', check)) {
-      // Match by name
-      match = 'name';
-    }
-    // Return
-    return this[match] === check;
-  };
-
-  /**
-   * Check if a variable is a type or instance of constructor
-   */
-  Type.prototype.is = function(value) {
-    // Get type
-    var type = ((typeof value) || '').toLowerCase();
-    // If object
-    if (type === 'object') {
-      // If object, match constructor
-      if (value instanceof this.Constructor) {
-        // Return true
+    Utils.prototype.forEach = function (object, callback) {
+        for (var o in object) {
+            if (object.hasOwnProperty(o)) {
+                if (callback.apply(object, [object[o], o, object]) === false) {
+                    return false;
+                }
+            }
+        }
         return true;
-      }
-    }
-    // Match
-    return (this.raw === type);
-  };
-
-  /**
-   * Inherits constructor
-   */
-  Type.prototype.inherits = function(Constructor) {
-    // Check
-    return utils.isFunction(Constructor) &&
-           (this.Constructor === Constructor);
-  };
-  
-  /**
-   * Compare
-   */
-  Type.prototype.compare = function(a, b, deep, level) {
-    // Return
-    return a - b;
-  };
-
-  // Set Type to Schema
-  Model.Schema.Type = Type;
-
-  /**
-   * Model property types
-   */
-  Model.Schema.Types = {};
-
-  // Inject Model
-})(window, window.Model, window.Model.utils);
-
-/**
- * Any type
- */
-(function(window, Type, Types, utils) {
-  'use strict';
-
-  /**
-   * Create type
-   */
-  Types.Any = new Type('Any');
-
-  /**
-   * Compare objects
-   */
-  Types.Any.compare = function(a, b, deep, level) {
-    // Return
-    return false;
-  };
-
-  /**
-   * Always return true
-   */
-  Types.Any.is = function(value) {
-    // Return true
-    return true;
-  };
-  
-  /**
-   * Inherits constructor
-   */
-  Types.Any.inherits = function(Constructor) {
-    // Check
-    return false;
-  };
-  
-  // Inject
-})(window, 
-   window.Model.Schema.Type, 
-   window.Model.Schema.Types, 
-   window.Model.utils);
-
-/**
- * Array type
- */
-(function(window, Type, Types, utils) {
-  'use strict';
-
-  /**
-   * Create type
-   */
-  Types.Array = new Type('Array', window.Array, true);
-
-  /**
-   * Compare
-   */
-  Types.Array.compare = function(a, b, deep, level) {
-    // If length do not match
-    if (a.length !== b.length) {
-      // Return
-      return true;
-    }
-    // If deep or no level
-    if (deep || !level) {
-      // Loop through
-      for (var i = 0; i < a.length; a++) {
-        // Get item
-        var aItem = a[i],
-            bItem = b[i];
-        // Compare
-        if (utils.compare(aItem, bItem, deep, (level || 0) + 1)) {
-          // Return true
-          return true;
-        }
-      }
-    }
-    // Return false by default
-    return false;
-  };
-
-  /**
-   * Check if array
-   */
-  Types.Array.is = function(value) {
-    // Return
-    return value && ((value.constructor === window.Array) || (value instanceof window.Array));
-  };
-  
-  // Inject
-})(window, 
-   window.Model.Schema.Type, 
-   window.Model.Schema.Types, 
-   window.Model.utils);
-
-/**
- * Boolean type
- */
-(function(window, Type, Types) {
-  'use strict';
-
-  /**
-   * Create type
-   */
-  Types.Boolean = new Type('Boolean', window.Boolean, true);
-
-  // Inject
-})(window, 
-   window.Model.Schema.Type, 
-   window.Model.Schema.Types);
-
-/**
- * Collection type
- */
-(function(window, Collection, Type, Types, utils) {
-  'use strict';
-
-  /**
-   * Create type
-   */
-  Types.Collection = new Type('Collection');
-
-  /**
-   * Compare objects
-   */
-  Types.Collection.compare = function(a, b, deep, level) {
-    // If not the same constructor
-    if (a.constructor !== b.constructor) {
-      // Return
-      return true;
-    }
-    // If deep or there's no level
-    if (deep || !level) {
-      // Loop through schema
-      for (var i = 0; i < a.length; i++) {
-        // Compare
-        if (utils.typeCompare(Types.Model, a[i], b[i], deep, (level || 0) + 1)) {
-          // Return true
-          return true;
-        }
-      }
-    }
-    // Return false
-    return false;
-  };
-  
-  /**
-   * Check if Collection
-   */
-  Types.Collection.is = function(value) {
-    // If there's isCollection
-    return value && 
-           value.prototype && 
-           value.prototype.constructor &&
-           value.prototype.constructor.isCollection;
-  };
-  
-  /**
-   * Inherits constructor
-   */
-  Types.Collection.inherits = function(Constructor) {
-    // Check
-    return utils.isFunction(Constructor) && !!Constructor.isCollection;
-  };
-  
-  // Inject
-})(window, 
-   window.Model.Collection, 
-   window.Model.Schema.Type, 
-   window.Model.Schema.Types, 
-   window.Model.utils);
-
-/**
- * Date type
- */
-(function(window, Type, Types) {
-  'use strict';
-
-  /**
-   * Create type
-   */
-  Types.Date = new Type('Date', window.Date, true);
-  
-  /**
-   * Check if Date
-   */
-  Types.Date.is = function(value) {
-    // Return
-    return value && (value.constructor === window.Date);
-  };
-  
-  // Inject
-})(window, 
-   window.Model.Schema.Type, 
-   window.Model.Schema.Types);
-
-/**
- * Model type
- */
-(function(window, Model, Type, Types, utils) {
-  'use strict';
-
-  /**
-   * Create type
-   */
-  Types.Model = new Type('Model');
-
-  /**
-   * Compare objects
-   */
-  Types.Model.compare = function(a, b, deep, level) {
-    // If not the same constructor
-    if (a.constructor !== b.constructor) {
-      // Return
-      return true;
-    }
-    // If deep or there's no level
-    if (deep || !level) {
-      // Loop through schema
-      for (var i = 0; i < a.schema.length; i++) {
-        // Set key
-        var key = a.schema[i];
-        // Compare
-        if (utils.typeCompare(key.type, a[key.name], b[key.name], deep, (level || 0) + 1)) {
-          // Return true
-          return true;
-        }
-      }
-    }
-    // Return false
-    return false;
-  };
-
-  /**
-   * Check if Model
-   */
-  Types.Model.is = function(value) {
-    // If there's isModel
-    return value && 
-           value.prototype && 
-           value.prototype.constructor &&
-           value.prototype.constructor.isModel;
-  };
-  
-  /**
-   * Inherits constructor
-   */
-  Types.Model.inherits = function(Constructor) {
-    // Check
-    return utils.isFunction(Constructor) && !!Constructor.isModel;
-  };
-  
-  // Inject
-})(window, 
-   window.Model, 
-   window.Model.Schema.Type, 
-   window.Model.Schema.Types, 
-   window.Model.utils);
-
-/**
- * Number type
- */
-(function(window, Type, Types) {
-  'use strict';
-
-  /**
-   * Create type
-   */
-  Types.Number = new Type('Number', window.Number, true);
-  
-  // Inject
-})(window, 
-   window.Model.Schema.Type, 
-   window.Model.Schema.Types);
-
-/**
- * Object type
- */
-(function(window, Type, Types, utils) {
-  'use strict';
-
-  /**
-   * Create type
-   */
-  Types.Object = new Type('Object', window.Object, true);
-
-  /**
-   * Compare objects
-   */
-  Types.Object.compare = function(a, b, deep, level) {
-    // Get keys
-    var aKeys = utils.keys(a, true),
-        bKeys = utils.keys(b, true);
-    // If not the same
-    if (aKeys.length !== bKeys.length) {
-      // Return
-      return true;
-    }
-    // Compare
-    if (deep || !level) {
-      // Loop
-      for (var i = 0; i < aKeys.length; i++) {
-        // Get key
-        var aKey = aKeys[i],
-            bKey = bKeys[i];
-        // If not the same key
-        if (aKey !== bKey) {
-          // Return
-          return true;
-        }
-        // Compare
-        if (utils.compare(aKey, bKey, deep, (level || 0) + 1)) {
-          // Return true
-          return true;
-        }
-      }
-    }
-    // Return false by default
-    return false;
-  };
-  
-  // Inject
-})(window, 
-   window.Model.Schema.Type, 
-   window.Model.Schema.Types, 
-   window.Model.utils);
-
-/**
- * Self type
- */
-(function(window, Type, Types, utils) {
-  'use strict';
-
-  /**
-   * Create type
-   */
-  Types.Self = new Type('Self');
-
-  /**
-   * Compare objects
-   */
-  Types.Self.compare = function(a, b, deep, level) {
-    // Return
-    return false;
-  };
-  
-  /**
-   * Always return false
-   */
-  Types.Self.is = function(value) {
-    // Return false
-    return false;
-  };
-  
-  // Inject
-})(window, 
-   window.Model.Schema.Type, 
-   window.Model.Schema.Types, 
-   window.Model.utils);
-
-/**
- * String type
- */
-(function(window, Type, Types) {
-  'use strict';
-
-  /**
-   * Create type
-   */
-  Types.String = new Type('String', window.String, true);
-
-  /**
-   * Compare
-   */
-  Types.String.compare = function(a, b, deep, level) {
-    // If less than b
-    if (a < b) {
-      // Return -1
-      return -1;
-    }
-    // If greater
-    if (a > b) {
-      // Return 1
-      return 1;
-    }
-    // Return 0
-    return 0;
-  };
-  
-  // Inject
-})(window, 
-   window.Model.Schema.Type, 
-   window.Model.Schema.Types);
-
-
-/**
- * Define Key
- */
-(function(window, Model, utils, undefined) {
-  'use strict';
-
-  /**
-   * Key attributes
-   */
-  var keyAttributes = ['enum'];
-
-  /**
-   * Schema Key
-   */
-  var Key = function(schema, name, definition) {
-    // Self
-    var self = this;
-
-    // Set definition
-    definition = definition || {};
-
-    // Set schema
-    this.schema = schema;
-    // Set name
-    this.name = name;
-    // Set type
-    this.type = Model.Schema.Types.Any;
-    // Set default
-    this.default = definition.default;
-    // Set nullable true by default
-    this.null = utils.is('Boolean', definition.null) ? definition.null : true;
-
-    // The translated
-    var type = definition.type || definition;
-    
-    // If type is a string
-    if (utils.is('String', type)) {
-      // Get from Types
-      type = Model.Schema.Types[type];
-    }
-
-    // If instance of Type
-    if (type instanceof Model.Schema.Type) {
-      // If type is self
-      if (type.match('Self')) {
-        // Create new based on self
-        this.type = new Model.Schema.Type(type.name, this.schema.Constructor);
-        // Set original
-        this.type.original = type;
-        // Otherwise
-      } else {
-        // Set as the Type
-        this.type = type;
-      }
-      // Otherwise
-    } else {
-      // Loop through types
-      utils.forEach(Model.Schema.Types, function(propType) {
-        // If native
-        if (propType.native && propType.match(type)) {
-          // Just set
-          self.type = propType;
-          // Return false
-          return false;
-          // If model or collection
-        } else if ((propType.match(Model.Schema.Types.Model)       && utils.inherits('Model', type)) ||
-                   (propType.match(Model.Schema.Types.Collection)  && utils.inherits('Collection', type))) {
-          // Create new type
-          self.type = new Model.Schema.Type(propType.name, type);
-          // Return false
-          return false;
-        }
-      });
-    }
-
-    // Keep other attributes
-    keyAttributes.forEach(function(attribute) {
-      // If defined
-      if (utils.isDefined(definition[attribute])) {
-        // Set it
-        self.filter(attribute, definition[attribute]);
-      }
-    });
-
-    // The schema Constructor's prototype
-    var proto = schema.Constructor.prototype;
-
-    // Define property for Model
-    utils.define.apply(proto, [name, {
-      // Get the property
-      get: function() {
-        // Use get
-        return proto.get.apply(this, [name]);
-      },
-      // Set the property
-      set: function(value) {
-        // Use set
-        proto.set.apply(this, [name, value]);
-      }
-    }]);
-  };
-
-  /**
-   * Evaluate
-   */
-  Key.prototype.evaluate = function(value, model) {
-    // Has model
-    var hasModel = utils.isDefined(model),
-        // Current value
-        current = hasModel ? model.get(this.name) : undefined,
-        // Is defined
-        defined = utils.isDefined(current),
-        // Result
-        result = current;
-    // Check if null
-    if (value === null) {
-      // If nullable
-      if (!!this.null) {
-        // Return
-        return null;
-      }
-      // Throw error
-      this.throw('`' + this.name + '` cannot be null', model);
-    }
-    // Select Type
-    switch (this.type.name) {
-      // Model
-      case Model.Schema.Types.Model.name:
-      // Collection
-      case Model.Schema.Types.Collection.name:
-      // Or self
-      case Model.Schema.Types.Self.name:
-        // If defined
-        if (defined) {
-          // Load
-          current.load(value);
-          // If value is instance of the given constructor
-        } else if (value instanceof this.type.Constructor) {
-          // Just replace
-          result = value;
-          // Otherwise
-        } else {
-          // Create new 
-          result = new this.type.Constructor(value);
-        }
-        break;
-      // If date
-      case Model.Schema.Types.Date.name:
-        // Initialize
-        result = new this.type.Constructor(value || null);
-        break;
-      // Array
-      case Model.Schema.Types.Array.name:
-        // Set value
-        value = utils.is('Array', value) ? value : (utils.isDefined(value) ? [value] : []);
-        // If defined
-        if (defined) {
-          // Empty first
-          current.length = 0;
-          // Push
-          current.push.apply(current, value);
-          // Otherwise
-        } else {
-          // Set it
-          result = value;
-        }
-        break;
-      // Any
-      case Model.Schema.Types.Any.name:
-        // Set normally
-        result = value;
-        break;
-      // Else
-      default:
-        // If string and there's enum
-        if (this.type.match(Model.Schema.Types.String) && utils.is('Array', this.enum)) {
-          // If not valid enum
-          if (!this.isValidEnum(value)) {
-            // Throw error
-            this.throw('Invalid enum value: ' + value, model);
-          }
-        }
-        // Set normally
-        result = utils.isDefined(value) ? this.type.Constructor(value) : this.type.Constructor();
-        break;
-    }
-    // Return result
-    return result;
-  };
-
-  /**
-   * Has default
-   */
-  Key.prototype.hasDefault = function() {
-    // Return
-    return utils.isDefined(this.default);
-  };
-
-  /**
-   * Get default value
-   */
-  Key.prototype.getDefault = function(model) {
-    // Execute if method
-    return utils.isFunction(this.default) ? 
-           // Call method
-           this.default.apply(this, utils.isDefined(model) ? [model] : []) :
-           // Return as is
-           this.default;
-  };
-
-  /**
-   * Enum
-   */
-  Key.prototype.isValidEnum = function(value) {
-    // Return
-    return this.enum.indexOf(value) >= 0;
-  };
-
-  /**
-   * Filter definition
-   */
-  Key.prototype.filter = function(attribute, value) {
-    // Select
-    switch (attribute) {
-      // Enum
-      case 'enum':
-        // Value must be an array of strings
-        var items = utils.is('Array', value) ? value : [value],
-            enumerable = [];
-        // Loop
-        items.forEach(function(item) {
-          // Add only if string and not empty
-          if (utils.is('String', item) && item.length) {
-            // Push to enum
-            enumerable.push(item);
-          }
-        });
-        // Set enumerable
-        this[attribute] = enumerable;
-        // If there's default
-        if (this.hasDefault()) {
-          // Get default value
-          var defaultValue = this.getDefault();
-          // If not valid enum
-          if (!this.isValidEnum(defaultValue)) {
-            // Throw
-            this.throw('Invalid enum default value: ' + defaultValue);
-          }
-        }
-        break;
-    }
-  };
-
-  /**
-   * Throw error
-   */
-  Key.prototype.throw = function(message, model) {
-    // Do throw
-    Model.Exception.prototype.throw.apply(model || this, [message]);
-  };
-
-  /**
-   * Export key
-   */
-  Key.prototype.export = function() {
-    // Json
-    var self = this, json = {
-      type: this.type.original || this.type
     };
-    // If there's default
-    if (this.hasDefault()) {
-      // Add
-      json.default = this.default;
+    /**
+     * Inherit a protoype
+     */
+    Utils.prototype.inherit = function (parent, child, ignore) {
+        child.prototype = Object.create(parent.prototype);
+        child.prototype.constructor = child;
+        this.extend(child, parent, ignore);
+        return child;
+    };
+    /**
+     * Is function
+     */
+    Utils.prototype.isFunction = function (variable) {
+        return !!(variable && variable.constructor && variable.call && variable.apply);
+    };
+    /**
+     * Is undefined
+     */
+    Utils.prototype.isUndefined = function (variable) {
+        return variable === this.undefined;
+    };
+    /**
+     * Listen to an event
+     */
+    Utils.prototype.on = function () {
+        var utils = this;
+        return function (name, callback) {
+            var object = this;
+            if (!utils.isFunction(callback)) {
+                throw new Error('Callback parameter must be a function');
+            }
+            if (utils.isUndefined(this[__].listeners)) {
+                this[__].listeners = {};
+            }
+            if (utils.isUndefined(this[__].listeners[name])) {
+                this[__].listeners[name] = [];
+                this[__].listeners[name].__index = 0;
+            }
+            var id = callback.id = this[__].listeners[name].__index++;
+            this[__].listeners[name].push(callback);
+            return function () {
+                var index = -1, length = object[__].listeners[name].length;
+                for (var i = 0; i < length; i++) {
+                    if (object[__].listeners[name][i].id === id) {
+                        index = i;
+                        break;
+                    }
+                }
+                if (index >= 0) {
+                    object[__].listeners[name].splice(index, 1);
+                }
+                return object;
+            };
+        };
+    };
+    return Utils;
+}());
+/**
+ * Export instance
+ */
+var utils = new Utils();
+
+/**
+ * The Model
+ */
+var Model = /** @class */ (function () {
+    /**
+     * The Model constructor
+     */
+    function Model() {
+        this[__] = {
+            attributes: {},
+            listeners: {}
+        };
+        this.constructor.schema.applyDefaults(this);
     }
-    // Loop through attributes
-    keyAttributes.forEach(function(attribute) {
-      // If set
-      if (utils.isDefined(self[attribute])) {
-        // Add
-        json[attribute] = self[attribute];
-      }
+    /**
+     * Emit an event
+     */
+    Model.prototype.emit = function (name, args, source) {
+        return utils.emit().apply(this, [name, args, source]);
+    };
+    /**
+     * Fire an event
+     */
+    Model.prototype.fire = function (name, args, source) {
+        return utils.fire().apply(this, [name, args, source]);
+    };
+    /**
+     * Load attributes
+     */
+    Model.prototype.load = function (data) {
+        var _this = this;
+        utils.forEach(data || {}, function (value, key) {
+            if (_this.constructor.schema.hasKey(key) || _this.constructor.schema.hasVirtual(key, 'set')) {
+                _this[key] = value;
+            }
+        });
+        return this.fire('load');
+    };
+    /**
+     * Listen to an event
+     */
+    Model.prototype.on = function (name, callback) {
+        return utils.on().apply(this, [name, callback]);
+    };
+    /**
+     * To string
+     */
+    Model.prototype.toJSON = function (ignore, replacer, space) {
+        return JSON.stringify(this.toObject(ignore), replacer, space);
+    };
+    /**
+     * Convert to object
+     */
+    Model.prototype.toObject = function (ignore) {
+        var _this = this;
+        var object = {}, schema = this.constructor.schema;
+        if (!ignore || !ignore.__flattened) {
+            ignore = utils.flattenIgnore(ignore);
+        }
+        schema.all_keys.forEach(function (key) {
+            if (ignore[key.name] !== true) {
+                var value = _this[key.name];
+                if (value && utils.isFunction(value.toObject)) {
+                    value = value.toObject(ignore[key.name]);
+                }
+                if (!utils.isUndefined(value)) {
+                    object[key.name] = value;
+                }
+            }
+        });
+        if ((schema.options.toObject || {}).virtuals === true) {
+            schema.virtuals.__keys.forEach(function (key_name) {
+                if (ignore[key_name] !== true && (utils.isFunction(schema.virtuals[key_name].get) || utils.isFunction(schema.virtuals[key_name]))) {
+                    var value = _this[key_name];
+                    if (value && utils.isFunction(value.toObject)) {
+                        value = value.toObject(ignore[key_name]);
+                    }
+                    if (!utils.isUndefined(value)) {
+                        object[key_name] = value;
+                    }
+                }
+            });
+        }
+        return object;
+    };
+    /**
+     * To string
+     */
+    Model.prototype.toString = function () {
+        return this.toJSON();
+    };
+    return Model;
+}());
+
+/**
+ * Model Collection
+ */
+var Collection = /** @class */ (function (_super) {
+    __extends(Collection, _super);
+    /**
+     * The Collection constructor
+     */
+    function Collection() {
+        var _this = this;
+        _this[__] = {
+            attributes: {},
+            listeners: {}
+        };
+        _this.constructor.schema.applyDefaults(_this);
+        return _this;
+    }
+    /**
+     * Cast a variable into this collection's constructor
+     */
+    Collection.prototype.cast = function (variable) {
+        var item = this.type.cast(variable);
+        if (item instanceof Model) {
+            item[__].collection = this;
+        }
+        return item;
+    };
+    Object.defineProperty(Collection.prototype, "model", {
+        /**
+         * Collection model
+         */
+        get: function () {
+            return utils.model.models[this.constructor.__constructor] || Model;
+        },
+        enumerable: true,
+        configurable: true
     });
-    // Return
-    return json;
-  };
+    Object.defineProperty(Collection.prototype, "type", {
+        /**
+         * Type
+         */
+        get: function () {
+            return utils.model.types[this.constructor.__constructor || 'Model'];
+        },
+        enumerable: true,
+        configurable: true
+    });
+    /**
+     * Concatenate arrays
+     */
+    Collection.prototype.concat = function () {
+        for (var i = 0; i < arguments.length; i++) {
+            this.push.apply(this, arguments[i]);
+        }
+        return this;
+    };
+    /**
+     * Emit an event
+     */
+    Collection.prototype.emit = function (name, args, source) {
+        return utils.emit().apply(this, [name, args, source]);
+    };
+    /**
+     * Override fill
+     */
+    Collection.prototype.fill = function () {
+        arguments[0] = this.cast(arguments[0]);
+        return Array.prototype.fill.apply(this, arguments);
+    };
+    /**
+     * Fire an event
+     */
+    Collection.prototype.fire = function (name, args, source) {
+        return utils.fire().apply(this, [name, args, source]);
+    };
+    /**
+     * Load
+     */
+    Collection.prototype.load = function (items) {
+        this.push.apply(this, items || []);
+        return this.fire('load');
+    };
+    /**
+     * Listen to an event
+     */
+    Collection.prototype.on = function (name, callback) {
+        return utils.on().apply(this, [name, callback]);
+    };
+    /**
+     * Override push
+     */
+    Collection.prototype.push = function () {
+        for (var i = 0; i < arguments.length; i++) {
+            arguments[i] = this.cast(arguments[i]);
+        }
+        return Array.prototype.push.apply(this, arguments);
+    };
+    /**
+     * Override splice
+     */
+    Collection.prototype.splice = function () {
+        if (arguments.length > 2) {
+            for (var i = 2; i < arguments.length; i++) {
+                arguments[i] = this.cast(arguments[i]);
+            }
+        }
+        return Array.prototype.splice.apply(this, arguments);
+    };
+    /**
+     * Convert to JSON
+     */
+    Collection.prototype.toJSON = function (ignore, replacer, space) {
+        return JSON.stringify(this.toObject(ignore), replacer, space);
+    };
+    /**
+     * Convert to object
+     */
+    Collection.prototype.toObject = function (ignore) {
+        if (!ignore || !ignore.__flattened) {
+            ignore = utils.flattenIgnore(ignore);
+        }
+        return this.map(function (item) {
+            return utils.isFunction(item.toObject) ? item.toObject(ignore) : item;
+        });
+    };
+    /**
+     * To string
+     */
+    Collection.prototype.toString = function () {
+        return this.toJSON();
+    };
+    /**
+     * Override unshift
+     */
+    Collection.prototype.unshift = function () {
+        for (var i = 0; i < arguments.length; i++) {
+            arguments[i] = this.cast(arguments[i]);
+        }
+        return Array.prototype.unshift.apply(this, arguments);
+    };
+    return Collection;
+}(Array));
 
-  // Set Key
-  Model.Schema.Key = Key;
+/**
+ * Key Type
+ */
+var Type = /** @class */ (function () {
+    /**
+     * Type constructor
+     */
+    function Type(name, constructor) {
+        /**
+         * The name
+         */
+        this.name = null;
+        /**
+         * Safe name
+         */
+        this.safe = null;
+        /**
+         * The constructor
+         */
+        this.__constructor = null;
+        this.name = name + '';
+        this.safe = this.name.toLowerCase();
+        constructor.type = this;
+        this.__constructor = constructor;
+        this.has_compare = utils.isFunction(this.__constructor.prototype.compare);
+    }
+    /**
+     * Cast a variable into this type
+     */
+    Type.prototype.cast = function (variable, options) {
+        if (!this.is(variable)) {
+            variable = new this.__constructor(variable, options);
+        }
+        return variable;
+    };
+    /**
+     * Compare
+     */
+    Type.prototype.compare = function (a, b) {
+        if (this.has_compare) {
+            return a.compare(b);
+        }
+        if (a > b) {
+            return 1;
+        }
+        else if (b > a) {
+            return -1;
+        }
+        else {
+            return 0;
+        }
+    };
+    /**
+     * Check if variable is an instance of this type
+     */
+    Type.prototype.is = function (variable) {
+        return ((typeof variable).toLowerCase() === this.safe) || (variable && (variable instanceof this.__constructor));
+    };
+    /**
+     * Check if constructor matches
+     */
+    Type.prototype.match = function (constructor) {
+        return constructor === this.__constructor;
+    };
+    return Type;
+}());
 
-  // Inject window, Model, and utils
-})(window, window.Model, window.Model.utils);
+/**
+ * Model Key class
+ */
+var Key = /** @class */ (function () {
+    /**
+     * Key constructor
+     */
+    function Key(schema, name, key) {
+        /**
+         * Default value
+         */
+        this["default"] = utils.undefined;
+        /**
+         * Key name
+         */
+        this.name = null;
+        /**
+         * Key options
+         */
+        this.options = utils.undefined;
+        /**
+         * The schema
+         */
+        this.schema = null;
+        /**
+         * The type
+         */
+        this.type = null;
+        /**
+         * Booted
+         */
+        this.booted = false;
+        this.schema = schema;
+        this.name = name;
+        this["default"] = key["default"];
+        this.options = key.options;
+        this.type = key.type || key;
+    }
+    /**
+     * Boot key
+     */
+    Key.prototype.boot = function () {
+        if (this.booted) {
+            return this;
+        }
+        var key = this, name = this.name, schema = this.schema;
+        // Fix type
+        if (!(this.type instanceof Type)) {
+            this.type = schema.model.type(this.type);
+        }
+        // Define attribute
+        Object.defineProperty(schema.__constructor.prototype, name, {
+            get: function () {
+                return callMutator.apply(this, ['get', this[__].attributes[name]]);
+            },
+            set: function (value) {
+                var previous = this[__].attributes[name];
+                value = setParent(key.type.cast(value, key.options), this);
+                this[__].attributes[name] = value = callMutator.apply(this, ['set', value]);
+                return this.fire('setAttribute', [name, value, previous]);
+            }
+        });
+        this.booted = true;
+        return this;
+        /**
+         * Call mutator
+         */
+        function callMutator(method, value) {
+            var mutator = schema.cache.mutators[method][name];
+            if (utils.isUndefined(mutator)) {
+                var fn = utils.camelCase([method, name, 'attribute'].join(' '));
+                mutator =
+                    schema.cache.mutators[method][name] =
+                        utils.isFunction(this[fn]) ? fn : null;
+            }
+            if (mutator !== null) {
+                value = this[mutator].apply(this, [value]);
+            }
+            return value;
+        }
+        /**
+         * Set Model or Collection parent
+         */
+        function setParent(value, model) {
+            if (value && ((value instanceof Model) || (value instanceof Collection))) {
+                value[__].parent = model;
+            }
+            return value;
+        }
+    };
+    /**
+     * Type
+     */
+    Key.Type = Type;
+    return Key;
+}());
+
+/**
+ * The Model Schema class
+ */
+var Schema = /** @class */ (function () {
+    /**
+     * Schema constructor
+     */
+    function Schema(constructor, keys, options) {
+        var _this = this;
+        /**
+         * The keys
+         */
+        this.keys = [];
+        /**
+         * Methods
+         */
+        this.methods = {};
+        /**
+         * Statics
+         */
+        this.statics = {};
+        /**
+         * Virtuals
+         */
+        this.virtuals = {};
+        /**
+         * Booted up
+         */
+        this.booted = false;
+        /**
+         * Model
+         */
+        this.model = null;
+        /**
+         * Options
+         */
+        this.options = {};
+        /**
+         * Schema type
+         */
+        this.type = 'model';
+        /**
+         * Cache
+         */
+        this.cache = {
+            mutators: {
+                get: {},
+                set: {}
+            }
+        };
+        constructor.schema = this;
+        this.__constructor = constructor;
+        this.options = options || {};
+        if (!utils.isUndefined(keys) && keys) {
+            var index_1 = 0;
+            this.keys.__index = {};
+            utils.forEach(keys, function (key, name) {
+                var key_instance = new Key(_this, name, key);
+                _this.keys.__index[key_instance.name] = index_1++;
+                _this.keys.push(key_instance);
+            });
+        }
+    }
+    Object.defineProperty(Schema.prototype, "all_keys", {
+        /**
+         * All keys
+         */
+        get: function () {
+            var _this = this;
+            if (!utils.isUndefined(this.__keys)) {
+                return this.__keys;
+            }
+            this.__keys = [].concat(this.inherited_keys, this.keys);
+            this.__keys.__index = {};
+            this.__keys.forEach(function (key, i) {
+                _this.__keys.__index[key.name] = i;
+            });
+            return this.__keys;
+        },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(Schema.prototype, "base_constructor", {
+        /**
+         * Base constructor
+         */
+        get: function () {
+            switch (this.type) {
+                case 'collection':
+                    return Collection;
+                case 'model':
+                    return Model;
+            }
+            return utils.undefined;
+        },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(Schema.prototype, "constructors", {
+        /**
+         * Constructors
+         */
+        get: function () {
+            return this.model.schemas[this.type + 's'];
+        },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(Schema.prototype, "inherited_keys", {
+        /**
+         * Inherited keys
+         */
+        get: function () {
+            var schema = (this.__constructor.inherits || {}).schema || {}, parent_keys = schema.keys || [], keys = [];
+            (schema.inherited_keys || []).forEach(function (key) {
+                if (utils.isUndefined(parent_keys.__index[key.name])) {
+                    keys.push(key);
+                }
+            });
+            return keys.concat(parent_keys);
+        },
+        enumerable: true,
+        configurable: true
+    });
+    /**
+     * Apply defaults
+     */
+    Schema.prototype.applyDefaults = function (object) {
+        this.all_keys.forEach(function (key) {
+            if (!utils.isUndefined(key["default"])) {
+                object[key.name] = key["default"];
+            }
+        });
+        return object;
+    };
+    /**
+     * Boot schema
+     */
+    Schema.prototype.boot = function () {
+        var _this = this;
+        if (this.booted) {
+            return this;
+        }
+        if (utils.isUndefined(this.__constructor.inherits)) {
+            this.__constructor.inherits = this.base_constructor;
+            if (utils.isUndefined(this.__constructor.inherits)) {
+                throw new Error('Invalid schema type: ' + this.type);
+            }
+        }
+        if (!utils.isFunction(this.__constructor.inherits)) {
+            var parent = this.constructors[this.__constructor.inherits];
+            if (utils.isUndefined(parent)) {
+                throw new Error('Invalid schema type: ' + this.type);
+            }
+            this.__constructor.inherits = (parent instanceof Schema) ? parent.boot().__constructor : parent;
+        }
+        utils.inherit(this.__constructor.inherits, this.__constructor, [
+            '__constructor',
+            '__name',
+            'inherits',
+            'schema',
+            'type'
+        ]);
+        // Define properties
+        utils.forEach(this.methods, function (value, key, object) {
+            if (utils.isFunction(value)) {
+                _this.__constructor.prototype[key] = value;
+            }
+        });
+        utils.forEach(this.statics, function (value, key, object) {
+            _this.__constructor[key] = value;
+        });
+        this.virtuals.__keys = [];
+        utils.forEach(this.virtuals, function (virtual, key) {
+            var definition = {};
+            if (utils.isFunction(virtual)) {
+                definition.get = virtual;
+            }
+            else {
+                if (!virtual) {
+                    virtual = {};
+                }
+                if (utils.isFunction(virtual.get)) {
+                    definition.get = virtual.get;
+                }
+                if (utils.isFunction(virtual.set)) {
+                    definition.set = virtual.set;
+                }
+            }
+            if (utils.isFunction(definition.get) || utils.isFunction(definition.set)) {
+                Object.defineProperty(_this.__constructor.prototype, key, definition);
+            }
+            _this.virtuals.__keys.push(key);
+        });
+        this.booted = true;
+        return this;
+    };
+    /**
+     * Define a model
+     */
+    Schema.prototype.define = function (modeljs, name, type, model) {
+        this.__constructor.__name = name;
+        this.model = modeljs;
+        if (!utils.isUndefined(type)) {
+            this.type = type;
+        }
+        if (this.type === 'collection') {
+            this.__constructor.__constructor = model || 'Model';
+        }
+        return this;
+    };
+    /**
+     * Has key
+     */
+    Schema.prototype.hasKey = function (name) {
+        return !utils.isUndefined(this.getKey(name));
+    };
+    /**
+     * Has virtual
+     */
+    Schema.prototype.hasVirtual = function (name, method) {
+        if (method === void 0) { method = 'get'; }
+        if (method === 'get') {
+            return utils.isFunction(this.virtuals[name]) || utils.isFunction(this.virtuals[name].get);
+        }
+        else if (method === 'set') {
+            return !utils.isUndefined(this.virtuals[name]) && utils.isFunction(this.virtuals[name].set);
+        }
+        else {
+            return false;
+        }
+    };
+    /**
+     * Inherit a parent constructor
+     */
+    Schema.prototype.inherit = function (parent) {
+        this.__constructor.inherits = parent;
+        return this;
+    };
+    /**
+     * Get key
+     */
+    Schema.prototype.getKey = function (name) {
+        return this.all_keys[this.all_keys.__index[name]];
+    };
+    /**
+     * Setup a method
+     */
+    Schema.prototype.method = function (name, callback) {
+        this.methods[name] = callback;
+        return this;
+    };
+    /**
+     * Setup a static method
+     */
+    Schema.prototype.static = function (name, callback) {
+        this.statics[name] = callback;
+        return this;
+    };
+    /**
+     * Call super method
+     */
+    Schema.prototype["super"] = function (object, name, args) {
+        if (name === 'constructor') {
+            return this.__constructor.inherits.apply(object, args || []);
+        }
+        else {
+            return this.__constructor.inherits.prototype[name].apply(object, args || []);
+        }
+    };
+    /**
+     * Setup a virtual method
+     */
+    Schema.prototype.virtual = function (name, callback, method) {
+        if (method === void 0) { method = 'get'; }
+        if (method !== 'get' && method !== 'set') {
+            throw new Error('Invalid virtual method: ' + method);
+        }
+        if (utils.isUndefined(this.virtuals[name])) {
+            this.virtuals[name] = {};
+        }
+        else if (utils.isFunction(this.virtuals[name])) {
+            this.virtuals[name] = {
+                get: this.virtuals[name]
+            };
+        }
+        this.virtuals[name][method] = callback;
+        return this;
+    };
+    /**
+     * The Key
+     */
+    Schema.Key = Key;
+    return Schema;
+}());
+
+/**
+ * The ModelJS class
+ */
+var ModelJS = /** @class */ (function () {
+    /**
+     * Model constructor
+     */
+    function ModelJS() {
+        /**
+         * The Collection
+         */
+        this.Collection = Collection;
+        /**
+         * The Model
+         */
+        this.Model = Model;
+        /**
+         * Set Schema so that it can be accessible by modeljs.Schema
+         */
+        this.Schema = Schema;
+        /**
+         * Types
+         */
+        this.types = {};
+        /**
+         * The utilities
+         */
+        this.utils = utils;
+        /**
+         * Booted
+         */
+        this.booted = false;
+        /**
+         * Collections
+         */
+        this.collections = {};
+        /**
+         * Models
+         */
+        this.models = {};
+        /**
+         * Schemas
+         */
+        this.schemas = {
+            collections: {},
+            models: {}
+        };
+        utils.model = this;
+        this.schemas.collections.__keys = [];
+        this.schemas.models.__keys = [];
+        this.types.__keys = [];
+        this.types.__length = 0;
+        // Initial types are Javascript Native types
+        this.type('Array', Array);
+        this.type('Boolean', Boolean);
+        this.type('Date', Date);
+        this.type('Number', Number);
+        this.type('Object', Object);
+        this.type('String', String);
+        // Set Collection and Model
+        this.type('Model', Model);
+        this.type('Collection', Collection);
+    }
+    /**
+     * Register
+     */
+    ModelJS.prototype.register = function (type, name, schema, inherit, model) {
+        var plural = type + 's';
+        if (utils.isUndefined(schema)) {
+            if (!this.booted) {
+                throw new Error('modeljs must be booted first');
+            }
+            return this[plural][name];
+        }
+        else {
+            if (!(schema instanceof Schema)) {
+                throw new Error('schema must be an instance of `Schema`');
+            }
+            this.schemas[plural][name] = schema.define(this, name, type, model);
+            this.schemas[plural].__keys.push(name);
+            if (!utils.isUndefined(inherit)) {
+                this.schemas[plural][name].inherit(inherit);
+            }
+            return this.schemas[plural][name];
+        }
+    };
+    /**
+     * Boot up
+     * Models need to be booted up so that the dependencies within schemas can be properly handled
+     */
+    ModelJS.prototype.boot = function () {
+        var _this = this;
+        if (this.booted) {
+            return this;
+        }
+        // Boot models
+        this.schemas.models.__keys.forEach(function (name) {
+            if (!utils.isUndefined(_this.models[name])) {
+                throw new Error('Model already exists: ' + name);
+            }
+            _this.models[name] = _this.schemas.models[name].boot().__constructor;
+            _this.type(name, _this.models[name]);
+        });
+        // Boot keys
+        this.schemas.models.__keys.forEach(function (name) {
+            _this.models[name].schema.keys.forEach(function (key) {
+                key.boot();
+            });
+        });
+        // Boot collections
+        this.schemas.collections.__keys.forEach(function (name) {
+            if (!utils.isUndefined(_this.collections[name])) {
+                throw new Error('Collection already exists: ' + name);
+            }
+            _this.collections[name] = _this.schemas.collections[name].boot().__constructor;
+            _this.type(name, _this.collections[name]);
+        });
+        this.booted = true;
+        return this;
+    };
+    /**
+     * Define a collection
+     */
+    ModelJS.prototype.collection = function (name, schema, model, inherit) {
+        return this.register('collection', name, schema, inherit, model);
+    };
+    /**
+     * Register or retrieve a Model
+     */
+    ModelJS.prototype.model = function (name, schema, inherit) {
+        return this.register('model', name, schema, inherit);
+    };
+    /**
+     * Register/retrieve type
+     */
+    ModelJS.prototype.type = function (name, constructor) {
+        if (utils.isUndefined(constructor)) {
+            if (utils.isFunction(name)) {
+                for (var i = 0; i < this.types.__length; i++) {
+                    var type = this.types[this.types.__keys[i]];
+                    if (type.match(name)) {
+                        return type;
+                    }
+                }
+            }
+            if (utils.isUndefined(this.types[name])) {
+                throw new Error('Type `' + name + '` does not exist');
+            }
+            return this.types[name];
+        }
+        else {
+            if (!utils.isUndefined(this.types[name])) {
+                throw new Error('Type `' + name + '` already exists');
+            }
+            this.types[name] = new Type(name, constructor);
+            this.types.__keys.push(name);
+            this.types.__length++;
+            return this;
+        }
+    };
+    return ModelJS;
+}());
+/**
+ * Export instance
+ */
+var modeljs = new ModelJS();
+
+exports.modeljs = modeljs;
+
+Object.defineProperty(exports, '__esModule', { value: true });
+
+})));
+//# sourceMappingURL=model.js.map
