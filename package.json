@@ -1,5 +1,5 @@
 {
-  "name": "@ronaldborla/model",
+  "name": "javascript-model",
   "description": "Stand-alone Javascript Model to represent documents and collections of documents",
   "author": "Ronald Borla",
   "version": "2.0.0",
