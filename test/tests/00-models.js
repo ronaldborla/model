@@ -108,8 +108,15 @@ describe('User', function() {
 		it('should return `profile.full_name` as `' + full_name + '`', function() {
 			assert.strictEqual((user.toObject().profile || {}).full_name, full_name);
 		});
-		it('should be equal to user data ignoring `profile.full_name`', function() {
-			assert.deepEqual(user.toObject(['profile.full_name']), data);
+		// Date attributes also need to be ignored because their default values are functions
+		it('should be equal to user data ignoring `added`, `updated`, `profile.added`, `profile.full_name`, and `profile.updated`', function() {
+			assert.deepEqual(user.toObject([
+				'added',
+				'updated',
+				'profile.added',
+				'profile.full_name', 
+				'profile.updated'
+			]), data);
 		});
 	});
 	describe('#toJSON()', function() {

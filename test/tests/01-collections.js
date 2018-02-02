@@ -102,8 +102,15 @@ describe('Users', function() {
 			it('should return `profile.full_name` as `' + full_names[0] + '`', function() {
 				assert.strictEqual((((users.toObject() || [])[0] || {}).profile || {}).full_name, full_names[0]);
 			});
-			it('should be equal to first users data ignoring `profile.full_name`', function() {
-				assert.deepEqual((users.toObject(['profile.full_name']) || [])[0], data[0]);
+			// Date attributes also need to be ignored because their default values are functions
+			it('should be equal to first users data ignoring `added`, `updated`, `profile.added`, `profile.full_name`, and `profile.updated`', function() {
+				assert.deepEqual((users.toObject([
+					'added',
+					'updated',
+					'profile.added',
+					'profile.full_name', 
+					'profile.updated'
+				]) || [])[0], data[0]);
 			});
 		});
 	});

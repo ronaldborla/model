@@ -7,9 +7,15 @@ var modeljs = require('../../../dist/model').modeljs,
  * Define Base schema
  */
 var schema = new modeljs.Schema(Base, {
-	added: 		Date,
-	id: 			Number,
-	updated: 	Date
+	added: {
+		default: 	Date.now,
+		type: 		Date
+	},
+	id: Number,
+	updated: {
+		default: 	Date.now,
+		type: 		Date
+	}
 });
 
 /**

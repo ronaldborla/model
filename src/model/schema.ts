@@ -143,7 +143,11 @@ export class Schema {
 	public applyDefaults(object) {
 		this.all_keys.forEach((key) => {
 			if (!utils.isUndefined(key.default)) {
-				object[key.name] = key.default;
+				if (utils.isFunction(key.default)) {
+					object[key.name] = key.default.apply(object, [key]);
+				} else {
+					object[key.name] = key.default;
+				}
 			}
 		});
 		return object;

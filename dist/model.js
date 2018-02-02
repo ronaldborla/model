@@ -465,7 +465,9 @@ var Type = /** @class */ (function () {
      */
     Type.prototype.cast = function (variable, options) {
         if (!this.is(variable)) {
-            variable = new this.__constructor(variable, options);
+            variable = utils.isUndefined(options) ?
+                new this.__constructor(variable) :
+                new this.__constructor(variable, options);
         }
         return variable;
     };
@@ -728,7 +730,12 @@ var Schema = /** @class */ (function () {
     Schema.prototype.applyDefaults = function (object) {
         this.all_keys.forEach(function (key) {
             if (!utils.isUndefined(key["default"])) {
-                object[key.name] = key["default"];
+                if (utils.isFunction(key["default"])) {
+                    object[key.name] = key["default"].apply(object, [key]);
+                }
+                else {
+                    object[key.name] = key["default"];
+                }
             }
         });
         return object;
