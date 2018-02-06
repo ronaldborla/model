@@ -109,9 +109,14 @@ describe('User', function() {
 			assert.strictEqual((user.toObject().profile || {}).full_name, full_name);
 		});
 		// Date attributes also need to be ignored because their default values are functions
-		it('should be equal to user data ignoring `added`, `updated`, `profile.added`, `profile.full_name`, and `profile.updated`', function() {
+		it('should be equal to user data ignoring `added`, `siblings`, `updated`, and `profile`', function() {
 			assert.deepEqual(user.toObject([
 				'added',
+				'siblings.added',
+				'siblings.profile.added',
+				'siblings.profile.full_name',
+				'siblings.profile.updated',
+				'siblings.updated',
 				'updated',
 				'profile.added',
 				'profile.full_name', 

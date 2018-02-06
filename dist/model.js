@@ -1004,12 +1004,6 @@ var ModelJS = /** @class */ (function () {
             _this.models[name] = _this.schemas.models[name].boot().__constructor;
             _this.type(name, _this.models[name]);
         });
-        // Boot keys
-        this.schemas.models.__keys.forEach(function (name) {
-            _this.models[name].schema.keys.forEach(function (key) {
-                key.boot();
-            });
-        });
         // Boot collections
         this.schemas.collections.__keys.forEach(function (name) {
             if (!utils.isUndefined(_this.collections[name])) {
@@ -1017,6 +1011,12 @@ var ModelJS = /** @class */ (function () {
             }
             _this.collections[name] = _this.schemas.collections[name].boot().__constructor;
             _this.type(name, _this.collections[name]);
+        });
+        // Boot keys
+        this.schemas.models.__keys.forEach(function (name) {
+            _this.models[name].schema.keys.forEach(function (key) {
+                key.boot();
+            });
         });
         this.booted = true;
         return this;

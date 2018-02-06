@@ -7,6 +7,7 @@ var modeljs = require('../../../dist/model').modeljs;
  */
 var schema = new modeljs.Schema(User, {
 	profile: 	'Profile',
+	siblings: 'Users',
 	username: String
 });
 

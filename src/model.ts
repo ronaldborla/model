@@ -117,12 +117,6 @@ class ModelJS {
 			this.models[name] = this.schemas.models[name].boot().__constructor;
 			this.type(name, this.models[name]);
 		});
-		// Boot keys
-		this.schemas.models.__keys.forEach((name) => {
-			this.models[name].schema.keys.forEach((key) => {
-				key.boot();
-			});
-		});
 		// Boot collections
 		this.schemas.collections.__keys.forEach((name) => {
 			if (!utils.isUndefined(this.collections[name])) {
@@ -131,6 +125,12 @@ class ModelJS {
 			this.collections[name] = this.schemas.collections[name].boot().__constructor;
 			this.type(name, this.collections[name]);
 		})
+		// Boot keys
+		this.schemas.models.__keys.forEach((name) => {
+			this.models[name].schema.keys.forEach((key) => {
+				key.boot();
+			});
+		});
 		this.booted = true;
 		return this;
 	}
