@@ -28,6 +28,11 @@ var schema = new modeljs.Schema(Profile, {
 schema.virtuals.full_name = getFullName;
 
 /**
+ * Use keys
+ */
+schema.use('Keys');
+
+/**
  * Inherit Base for Profile
  */
 modeljs.model('Profile', schema, 'Base');

@@ -2,6 +2,8 @@ import { __  	 			} from './config';
 import { Collection } from './collection';
 import { Key 	 			} from './key';
 import { Model 			} from './model';
+import { ModelJS 		} from '../model'
+import { Trait 			} from './trait';
 import { utils 			} from './utils';
 
 /**
@@ -45,9 +47,9 @@ export class Schema {
 	private booted: boolean = false;
 
 	/**
-	 * Model
+	 * ModelJS
 	 */
-	private model: Model = null;
+	private model: ModelJS = null;
 
 	/**
 	 * Options
@@ -94,12 +96,40 @@ export class Schema {
 		if (!utils.isUndefined(this.__keys)) {
 			return this.__keys;
 		}
-		this.__keys = [].concat(this.inherited_keys, this.keys);
+		this.__keys = [];
 		this.__keys.__index = {};
-		this.__keys.forEach((key, i) => {
-			this.__keys.__index[key.name] = i;
+		this.inherited_keys.forEach((key) => {
+			this.__keys.__index[key.name] = this.__keys.length;
+			this.__keys.push(key);
+		});
+		this.keys.forEach((key) => {
+			if (utils.isUndefined(this.__keys.__index[key.name])) {
+				this.__keys.__index[key.name] = this.__keys.length;
+				this.__keys.push(key);
+			}
 		});
 		return this.__keys;
+	}
+
+	/**
+	 * All methods
+	 */
+	public get all_methods() {
+		return utils.unique(Object.keys(this.methods).concat(this.inherited_methods));
+	}
+
+	/**
+	 * All statics
+	 */
+	public get all_statics() {
+		return utils.unique(Object.keys(this.statics).concat(this.inherited_statics));
+	}
+
+	/**
+	 * All virtuals
+	 */
+	public get all_virtuals() {
+		return utils.unique(Object.keys(this.virtuals).concat(this.inherited_virtuals));
 	}
 
 	/**
@@ -126,15 +156,52 @@ export class Schema {
 	 * Inherited keys
 	 */
 	public get inherited_keys() {
-		let schema = (this.__constructor.inherits || {}).schema || {},
-				parent_keys = schema.keys || [],
+		let parent = this.parent || {},
+				parent_keys = parent.keys || [],
 				keys = [];
-		(schema.inherited_keys || []).forEach((key) => {
+		(parent.inherited_keys || []).forEach((key) => {
 			if (utils.isUndefined(parent_keys.__index[key.name])) {
 				keys.push(key);
 			}
 		});
 		return keys.concat(parent_keys);
+	}
+
+	/**
+	 * Get inherited methods
+	 */
+	public get inherited_methods() {
+		return this.getInherited('methods');
+	}
+
+	/**
+	 * Get inherited statics
+	 */
+	public get inherited_statics() {
+		return this.getInherited('statics');
+	}
+
+	/**
+	 * Get inherited virtuals
+	 */
+	public get inherited_virtuals() {
+		return this.getInherited('virtuals');
+	}
+
+	/**
+	 * Get parent schema
+	 */
+	public get parent() {
+		return (this.__constructor.inherits || {}).schema;
+	}
+
+	/**
+	 * All traits
+	 */
+	public get traits() : Array<Trait> {
+		return (this.options.traits || []).map((trait) => {
+			return this.model.trait(trait);
+		});
 	}
 
 	/**
@@ -180,7 +247,29 @@ export class Schema {
 			'schema',
 			'type'
 		]);
-		// Define properties
+		let methods = {},
+				statics = {},
+				virtuals = {};
+		this.traits.forEach((trait) => {
+			utils.extend(methods, trait.methods);
+			utils.extend(statics, trait.statics);
+			utils.extend(virtuals, trait.virtuals);
+		});
+		utils.forEach(methods, (value, key) => {
+			if (utils.isUndefined(this.methods[key])) {
+				this.methods[key] = value;
+			}
+		});
+		utils.forEach(statics, (value, key) => {
+			if (utils.isUndefined(this.statics[key])) {
+				this.statics[key] = value;
+			}
+		});
+		utils.forEach(virtuals, (value, key) => {
+			if (utils.isUndefined(this.virtuals[key])) {
+				this.virtuals[key] = value;
+			}
+		});
 		utils.forEach(this.methods, (value, key, object) => {
 			if (utils.isFunction(value)) {
 				this.__constructor.prototype[key] = value;
@@ -189,7 +278,7 @@ export class Schema {
 		utils.forEach(this.statics, (value, key, object) => {
 			this.__constructor[key] = value;
 		});
-		this.virtuals.__keys = [];
+		this.__virtuals_keys = [];
 		utils.forEach(this.virtuals, (virtual, key) => {
 			let definition: any = {};
 			if (utils.isFunction(virtual)) {
@@ -208,7 +297,7 @@ export class Schema {
 			if (utils.isFunction(definition.get) || utils.isFunction(definition.set)) {
 				Object.defineProperty(this.__constructor.prototype, key, definition);
 			}
-			this.virtuals.__keys.push(key);
+			this.__virtuals_keys.push(key);
 		});
 		this.booted = true;
 		return this;
@@ -227,6 +316,24 @@ export class Schema {
 			this.__constructor.__constructor = model || 'Model';
 		}
 		return this;
+	}
+
+	/**
+	 * Get inherited
+	 */
+	public getInherited(type) : Array<string> {
+		let parent = this.parent;
+		if (!parent) {
+			return [];
+		}
+		let parent_items = Object.keys(parent[type]) || [],
+				items = [];
+		(parent.getInherited(type) || []).forEach((item) => {
+			if (utils.isUndefined(parent[type][item])) {
+				items.push(item);
+			}
+		});
+		return items.concat(parent_items);
 	}
 
 	/**
@@ -289,6 +396,25 @@ export class Schema {
 		} else {
 			return this.__constructor.inherits.prototype[name].apply(object, args || []);
 		}
+	}
+
+	/**
+	 * Use a trait
+	 */
+	public use(traits: any) {
+		if (utils.isUndefined(traits)) {
+			throw new Error('At least one `trait` is required');
+		}
+		if (utils.isUndefined(this.options.traits)) {
+			this.options.traits = [];
+		}
+		if (!utils.isFunction(traits.forEach)) {
+			traits = [traits];
+		}
+		traits.forEach((trait) => {
+			this.options.traits.push(trait);
+		});
+		return this;
 	}
 
 	/**

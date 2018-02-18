@@ -78,7 +78,7 @@ export class Model {
 			}
 		});
 		if ((schema.options.toObject || {}).virtuals === true) {
-			schema.virtuals.__keys.forEach((key_name) => {
+			schema.__virtuals_keys.forEach((key_name) => {
 				if (ignore[key_name] !== true && (utils.isFunction(schema.virtuals[key_name].get) || utils.isFunction(schema.virtuals[key_name]))) {
 					let value = this[key_name];
 					if (value && utils.isFunction(value.toObject)) {

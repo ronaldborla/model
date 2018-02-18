@@ -25,6 +25,11 @@ schema.methods.compare 			= compare;
 schema.methods.getAttribute = getAttribute;
 
 /**
+ * Use trait
+ */
+schema.use('Meta');
+
+/**
  * Register Base model
  */
 modeljs.model('Base', schema);

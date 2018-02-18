@@ -193,6 +193,23 @@ class Utils {
 			};
 		};
 	}
+
+	/**
+	 * Get unique
+	 */
+	public unique(array: Array<any>, callback?: any) {
+		let has_callback = this.isFunction(callback),
+				keys = {},
+				unique = [];
+		(array || []).forEach((item, i, list) => {
+			let key = has_callback ? callback(item, i, list) : item;
+			if (keys[key] !== true) {
+				unique.push(item);
+				keys[key] = true
+			}
+		});
+		return unique;
+	}
 }
 
 /**

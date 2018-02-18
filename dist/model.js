@@ -190,6 +190,20 @@ var Utils = /** @class */ (function () {
             };
         };
     };
+    /**
+     * Get unique
+     */
+    Utils.prototype.unique = function (array, callback) {
+        var has_callback = this.isFunction(callback), keys = {}, unique = [];
+        (array || []).forEach(function (item, i, list) {
+            var key = has_callback ? callback(item, i, list) : item;
+            if (keys[key] !== true) {
+                unique.push(item);
+                keys[key] = true;
+            }
+        });
+        return unique;
+    };
     return Utils;
 }());
 /**
@@ -268,7 +282,7 @@ var Model = /** @class */ (function () {
             }
         });
         if ((schema.options.toObject || {}).virtuals === true) {
-            schema.virtuals.__keys.forEach(function (key_name) {
+            schema.__virtuals_keys.forEach(function (key_name) {
                 if (ignore[key_name] !== true && (utils.isFunction(schema.virtuals[key_name].get) || utils.isFunction(schema.virtuals[key_name]))) {
                     var value = _this[key_name];
                     if (value && utils.isFunction(value.toObject)) {
@@ -630,7 +644,7 @@ var Schema = /** @class */ (function () {
          */
         this.booted = false;
         /**
-         * Model
+         * ModelJS
          */
         this.model = null;
         /**
@@ -672,12 +686,49 @@ var Schema = /** @class */ (function () {
             if (!utils.isUndefined(this.__keys)) {
                 return this.__keys;
             }
-            this.__keys = [].concat(this.inherited_keys, this.keys);
+            this.__keys = [];
             this.__keys.__index = {};
-            this.__keys.forEach(function (key, i) {
-                _this.__keys.__index[key.name] = i;
+            this.inherited_keys.forEach(function (key) {
+                _this.__keys.__index[key.name] = _this.__keys.length;
+                _this.__keys.push(key);
+            });
+            this.keys.forEach(function (key) {
+                if (utils.isUndefined(_this.__keys.__index[key.name])) {
+                    _this.__keys.__index[key.name] = _this.__keys.length;
+                    _this.__keys.push(key);
+                }
             });
             return this.__keys;
+        },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(Schema.prototype, "all_methods", {
+        /**
+         * All methods
+         */
+        get: function () {
+            return utils.unique(Object.keys(this.methods).concat(this.inherited_methods));
+        },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(Schema.prototype, "all_statics", {
+        /**
+         * All statics
+         */
+        get: function () {
+            return utils.unique(Object.keys(this.statics).concat(this.inherited_statics));
+        },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(Schema.prototype, "all_virtuals", {
+        /**
+         * All virtuals
+         */
+        get: function () {
+            return utils.unique(Object.keys(this.virtuals).concat(this.inherited_virtuals));
         },
         enumerable: true,
         configurable: true
@@ -713,13 +764,66 @@ var Schema = /** @class */ (function () {
          * Inherited keys
          */
         get: function () {
-            var schema = (this.__constructor.inherits || {}).schema || {}, parent_keys = schema.keys || [], keys = [];
-            (schema.inherited_keys || []).forEach(function (key) {
+            var parent = this.parent || {}, parent_keys = parent.keys || [], keys = [];
+            (parent.inherited_keys || []).forEach(function (key) {
                 if (utils.isUndefined(parent_keys.__index[key.name])) {
                     keys.push(key);
                 }
             });
             return keys.concat(parent_keys);
+        },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(Schema.prototype, "inherited_methods", {
+        /**
+         * Get inherited methods
+         */
+        get: function () {
+            return this.getInherited('methods');
+        },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(Schema.prototype, "inherited_statics", {
+        /**
+         * Get inherited statics
+         */
+        get: function () {
+            return this.getInherited('statics');
+        },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(Schema.prototype, "inherited_virtuals", {
+        /**
+         * Get inherited virtuals
+         */
+        get: function () {
+            return this.getInherited('virtuals');
+        },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(Schema.prototype, "parent", {
+        /**
+         * Get parent schema
+         */
+        get: function () {
+            return (this.__constructor.inherits || {}).schema;
+        },
+        enumerable: true,
+        configurable: true
+    });
+    Object.defineProperty(Schema.prototype, "traits", {
+        /**
+         * All traits
+         */
+        get: function () {
+            var _this = this;
+            return (this.options.traits || []).map(function (trait) {
+                return _this.model.trait(trait);
+            });
         },
         enumerable: true,
         configurable: true
@@ -768,7 +872,27 @@ var Schema = /** @class */ (function () {
             'schema',
             'type'
         ]);
-        // Define properties
+        var methods = {}, statics = {}, virtuals = {};
+        this.traits.forEach(function (trait) {
+            utils.extend(methods, trait.methods);
+            utils.extend(statics, trait.statics);
+            utils.extend(virtuals, trait.virtuals);
+        });
+        utils.forEach(methods, function (value, key) {
+            if (utils.isUndefined(_this.methods[key])) {
+                _this.methods[key] = value;
+            }
+        });
+        utils.forEach(statics, function (value, key) {
+            if (utils.isUndefined(_this.statics[key])) {
+                _this.statics[key] = value;
+            }
+        });
+        utils.forEach(virtuals, function (value, key) {
+            if (utils.isUndefined(_this.virtuals[key])) {
+                _this.virtuals[key] = value;
+            }
+        });
         utils.forEach(this.methods, function (value, key, object) {
             if (utils.isFunction(value)) {
                 _this.__constructor.prototype[key] = value;
@@ -777,7 +901,7 @@ var Schema = /** @class */ (function () {
         utils.forEach(this.statics, function (value, key, object) {
             _this.__constructor[key] = value;
         });
-        this.virtuals.__keys = [];
+        this.__virtuals_keys = [];
         utils.forEach(this.virtuals, function (virtual, key) {
             var definition = {};
             if (utils.isFunction(virtual)) {
@@ -797,7 +921,7 @@ var Schema = /** @class */ (function () {
             if (utils.isFunction(definition.get) || utils.isFunction(definition.set)) {
                 Object.defineProperty(_this.__constructor.prototype, key, definition);
             }
-            _this.virtuals.__keys.push(key);
+            _this.__virtuals_keys.push(key);
         });
         this.booted = true;
         return this;
@@ -815,6 +939,22 @@ var Schema = /** @class */ (function () {
             this.__constructor.__constructor = model || 'Model';
         }
         return this;
+    };
+    /**
+     * Get inherited
+     */
+    Schema.prototype.getInherited = function (type) {
+        var parent = this.parent;
+        if (!parent) {
+            return [];
+        }
+        var parent_items = Object.keys(parent[type]) || [], items = [];
+        (parent.getInherited(type) || []).forEach(function (item) {
+            if (utils.isUndefined(parent[type][item])) {
+                items.push(item);
+            }
+        });
+        return items.concat(parent_items);
     };
     /**
      * Has key
@@ -876,6 +1016,25 @@ var Schema = /** @class */ (function () {
         }
     };
     /**
+     * Use a trait
+     */
+    Schema.prototype.use = function (traits) {
+        var _this = this;
+        if (utils.isUndefined(traits)) {
+            throw new Error('At least one `trait` is required');
+        }
+        if (utils.isUndefined(this.options.traits)) {
+            this.options.traits = [];
+        }
+        if (!utils.isFunction(traits.forEach)) {
+            traits = [traits];
+        }
+        traits.forEach(function (trait) {
+            _this.options.traits.push(trait);
+        });
+        return this;
+    };
+    /**
      * Setup a virtual method
      */
     Schema.prototype.virtual = function (name, callback, method) {
@@ -902,6 +1061,53 @@ var Schema = /** @class */ (function () {
 }());
 
 /**
+ * Trait
+ */
+var Trait = /** @class */ (function () {
+    /**
+     * Trait constructor
+     */
+    function Trait() {
+        /**
+         * Trait name
+         */
+        this.name = '';
+        /**
+         * Methods
+         */
+        this.methods = {};
+        /**
+         * Statics
+         */
+        this.statics = {};
+        /**
+         * Virtuals
+         */
+        this.virtuals = {};
+        // Do nothing
+    }
+    /**
+     * Method
+     */
+    Trait.prototype.method = function () {
+        return Schema.prototype.method.apply(this, arguments);
+    };
+    /**
+     * Static
+     */
+    Trait.prototype.static = function () {
+        return Schema.prototype.static.apply(this, arguments);
+    };
+    /**
+     * Virtual
+     */
+    Trait.prototype.virtual = function () {
+        return Schema.prototype.virtual.apply(this, arguments);
+    };
+    return Trait;
+}());
+
+/**
  * The ModelJS class
  */
 var ModelJS = /** @class */ (function () {
@@ -921,6 +1127,14 @@ var ModelJS = /** @class */ (function () {
          * Set Schema so that it can be accessible by modeljs.Schema
          */
         this.Schema = Schema;
+        /**
+         * Trait
+         */
+        this.Trait = Trait;
+        /**
+         * Traits
+         */
+        this.traits = {};
         /**
          * Types
          */
@@ -951,6 +1165,8 @@ var ModelJS = /** @class */ (function () {
         utils.model = this;
         this.schemas.collections.__keys = [];
         this.schemas.models.__keys = [];
+        this.traits.__keys = [];
+        this.traits.__length = 0;
         this.types.__keys = [];
         this.types.__length = 0;
         // Initial types are Javascript Native types
@@ -1034,6 +1250,27 @@ var ModelJS = /** @class */ (function () {
         return this.register('model', name, schema, inherit);
     };
     /**
+     * Register or retrieve a trait
+     */
+    ModelJS.prototype.trait = function (name, trait) {
+        if (utils.isUndefined(trait)) {
+            if (utils.isUndefined(this.traits[name])) {
+                throw new Error('Trait `' + name + '` does not exist');
+            }
+            return this.traits[name];
+        }
+        else {
+            if (!utils.isUndefined(this.traits[name])) {
+                throw new Error('Trait `' + name + '`already exists');
+            }
+            trait.name = name;
+            this.traits[name] = trait;
+            this.traits.__keys.push(name);
+            this.traits.__length++;
+            return this;
+        }
+    };
+    /**
      * Register/retrieve type
      */
     ModelJS.prototype.type = function (name, constructor) {
@@ -1069,6 +1306,7 @@ var ModelJS = /** @class */ (function () {
 var modeljs = new ModelJS();
 
 exports.modeljs = modeljs;
+exports.ModelJS = ModelJS;
 
 Object.defineProperty(exports, '__esModule', { value: true });
 

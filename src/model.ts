@@ -1,13 +1,14 @@
 import { Collection } from './model/collection';
 import { Model 			} from './model/model';
 import { Schema 		} from './model/schema';
+import { Trait 			} from './model/trait';
 import { Type 			} from './model/type';
 import { utils  		} from './model/utils';
 
 /**
  * The ModelJS class
  */
-class ModelJS {
+export class ModelJS {
 
 	/**
 	 * The Collection
@@ -25,6 +26,16 @@ class ModelJS {
 	public Schema: any = Schema;
 
 	/**
+	 * Trait
+	 */
+	public Trait: any = Trait;
+
+	/**
+	 * Traits
+	 */
+	public traits: object = {};
+
+	/**
 	 * Types
 	 */
 	public types: object = {};
@@ -32,7 +43,7 @@ class ModelJS {
 	/**
 	 * The utilities
 	 */
-	public utils: Utils = utils;
+	public utils: any = utils;
 
 	/**
 	 * Booted
@@ -64,6 +75,8 @@ class ModelJS {
 		utils.model = this;
 		this.schemas.collections.__keys = [];
 		this.schemas.models.__keys = [];
+		this.traits.__keys = [];
+		this.traits.__length = 0;
 		this.types.__keys = [];
 		this.types.__length = 0;
 		// Initial types are Javascript Native types
@@ -147,6 +160,27 @@ class ModelJS {
 	 */
 	public model(name: string, schema?: any, inherit?: string) {
 		return this.register('model', name, schema, inherit);
+	}
+
+	/**
+	 * Register or retrieve a trait
+	 */
+	public trait(name: any, trait?: Trait) {
+		if (utils.isUndefined(trait)) {
+			if (utils.isUndefined(this.traits[name])) {
+				throw new Error('Trait `' + name + '` does not exist');
+			}
+			return this.traits[name];
+		} else {
+			if (!utils.isUndefined(this.traits[name])) {
+				throw new Error('Trait `' + name + '`already exists');
+			}
+			trait.name = name;
+			this.traits[name] = trait;
+			this.traits.__keys.push(name);
+			this.traits.__length++;
+			return this;
+		}
 	}
 
 	/**

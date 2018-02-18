@@ -106,15 +106,33 @@ describe('Users', function() {
 			it('should be equal to first users data ignoring `added`, `siblings`, `updated`, and `profile`', function() {
 				assert.deepEqual((users.toObject([
 					'added',
+					'keys_count',
+					'methods_count',
 					'siblings.added',
+					'siblings.keys_count',
+					'siblings.methods_count',
+					'siblings.statics_count',
 					'siblings.profile.added',
-					'siblings.profile.full_name',
+					'siblings.profile.full_name', 
+					'siblings.profile.keys',
+					'siblings.profile.keys_count',
+					'siblings.profile.methods_count',
+					'siblings.profile.statics_count',
 					'siblings.profile.updated',
+					'siblings.profile.virtuals_count',
 					'siblings.updated',
+					'siblings.virtuals_count',
 					'updated',
 					'profile.added',
 					'profile.full_name', 
-					'profile.updated'
+					'profile.keys',
+					'profile.keys_count',
+					'profile.methods_count',
+					'profile.statics_count',
+					'profile.updated',
+					'profile.virtuals_count',
+					'statics_count',
+					'virtuals_count',
 				]) || [])[0], data[0]);
 			});
 		});
