@@ -21,6 +21,12 @@
       this.virtuals     = virtuals || [];
       this.options      = options || {};
       this.index        = {};
+      this.cache        = {
+        mutators: {
+          get: {},
+          set: {}
+        }
+      };
 
       if (this.parent) {
         i = l = this.parent.virtuals.length;

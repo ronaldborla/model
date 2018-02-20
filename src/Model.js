@@ -98,12 +98,13 @@
      * Get attribute
      */
     function getAttribute(name) {
-      // Get method
-      var method  = utils.camelCase(['get', name, 'attribute'].join(' ')),
-          orig    = attr(this)[name];
-      // If set
-      if (utils.isFunction(this[method])) {
-        // Use it
+      var method = this.schema.cache.mutators.get[name],
+          orig = attr(this)[name];
+      if (utils.isUndefined(method)) {
+        var mutator = utils.camelCase(['get', name, 'attribute'].join(' '));
+        method = this.schema.cache.mutators.get[name] = (utils.isFunction(this[mutator]) ? mutator : null);
+      }
+      if (method) {
         return this[method].apply(this, [orig]);
       } else {
         return orig;
@@ -161,13 +162,17 @@
      * Set attribute
      */
     function setAttribute(name, value) {
-      var key         = this.schema.get(name),
+      var method      = this.schema.cache.mutators.set[name],
+          key         = this.schema.get(name),
           attributes  = attr(this),
           previous    = attributes[name],
-          method      = utils.camelCase(['set', name, 'attribute'].join(' ')),
           evaluated   = key.evaluate(value, this);
+      if (utils.isUndefined(method)) {
+        var mutator = utils.camelCase(['set', name, 'attribute'].join(' '));
+        method = this.schema.cache.mutators.set[name] = (utils.isFunction(this[mutator]) ? mutator : null);
+      }
       // If method is set
-      if (utils.isFunction(this[method])) {
+      if (method) {
         attributes[name] = this[method].apply(this, [evaluated, previous]);
       } else {
         attributes[name] = evaluated;
