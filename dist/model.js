@@ -182,7 +182,8 @@
         utils.$(attributes[name]).parent = this;
       }
       this.fire('setAttribute', [name, attributes[name], previous]);
-      this.fire(method, [attributes[name], previous]);
+      // Deprecate (it's pretty resource intensive to implement this, use setAttribute instead)
+      // this.fire(method, [attributes[name], previous]);
       // If changed
       if (utils.typeCompare(key.type, attributes[name], previous)) {
         this.change();
