@@ -131,7 +131,7 @@
       // Array
       case Model.Schema.Types.Array.name:
         // Set value
-        value = utils.is('Array', value) ? value : (utils.isDefined(value) ? [value] : []);
+        value = utils.is('Array', value) ? value.slice(0) : (utils.isDefined(value) ? [value] : []);
         if (defined) {
           current.length = 0;
           current.push.apply(current, value);
