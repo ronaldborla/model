@@ -478,6 +478,9 @@ var Type = /** @class */ (function () {
      * Cast a variable into this type
      */
     Type.prototype.cast = function (variable, options) {
+        if (variable === null) {
+            return variable;
+        }
         if (!this.is(variable)) {
             variable = utils.isUndefined(options) ?
                 new this.__constructor(variable) :

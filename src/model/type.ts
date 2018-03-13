@@ -35,6 +35,9 @@ export class Type {
 	 * Cast a variable into this type
 	 */
 	public cast(variable: any, options?: any) {
+		if (variable === null) {
+			return variable;
+		}
 		if (!this.is(variable)) {
 			variable = utils.isUndefined(options) ?
 				new this.__constructor(variable) :
