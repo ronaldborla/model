@@ -2,7 +2,7 @@
   "name": "javascript-model",
   "description": "Stand-alone Javascript Model to represent documents and collections of documents",
   "author": "Ronald Borla",
-  "version": "2.1.1",
+  "version": "3.0.0",
   "main": "dist/model.js",
   "repository": "https://github.com/ronaldborla/model",
   "license": "MIT",
@@ -10,13 +10,14 @@
     "node": ">=8.9.1"
   },
   "scripts": {
-    "beep": "play-sound beep.mp3",
     "build": "npm run softbuild && npm run uglify",
-    "softbuild": "rollup -c && npm run beep",
+    "build:html": "rollup --config test.config.js",
+    "softbuild": "rollup -c",
     "start": "npm run watch",
-    "test": "mocha test/index && npm run beep",
-    "uglify": "uglifyjs dist/model.js --output dist/model.min.js && npm run beep",
+    "test": "mocha test/index",
+    "uglify": "uglifyjs dist/model.js --output dist/model.min.js",
     "watch": "concurrently -c 'green,yellow' -n 'script,test' 'npm run watch:script' 'npm run watch:test'",
+    "watch:html": "nodemon -e html,ts --ignore dist/ --ignore node_modules/ -x 'npm run build:html'",
     "watch:test": "nodemon -e html,js --ignore dist/ --ignore node_modules/ --ignore src/ -x 'npm run test'",
     "watch:script": "nodemon -e ts --ignore dist/ --ignore node_modules/ --ignore test/ -x 'npm run softbuild'"
   },
@@ -26,10 +27,10 @@
     "glob": "^7.1.2",
     "mocha": "^4.0.1",
     "nodemon": "^1.14.3",
-    "play-sound-cli": "^1.0.0",
     "rollup": "^0.53.0",
     "rollup-plugin-typescript": "^0.8.1",
     "typescript": "^2.2.0",
     "uglify-js": "^3.3.3"
-  }
+  },
+  "dependencies": {}
 }

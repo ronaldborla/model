@@ -1,218 +1,116 @@
-import { Collection } from './model/collection';
-import { Model 			} from './model/model';
-import { Schema 		} from './model/schema';
-import { Trait 			} from './model/trait';
-import { Type 			} from './model/type';
-import { utils  		} from './model/utils';
+import utils from './utils';
 
 /**
- * The ModelJS class
+ * Model
  */
-export class ModelJS {
+export default class Model {
 
-	/**
-	 * The Collection
-	 */
-	public Collection: any = Collection;
+  /**
+   * The Collection
+   */
+  protected static Collection: any = 'Collection';
 
-	/**
-	 * The Model
-	 */
-	public Model: any = Model;
+  /**
+   * The schema
+   */
+  protected static schema: any = {};
 
-	/**
-	 * Set Schema so that it can be accessible by modeljs.Schema
-	 */
-	public Schema: any = Schema;
+  /**
+   * Is Model
+   */
+  private static isModel = true;
 
-	/**
-	 * Trait
-	 */
-	public Trait: any = Trait;
+  /**
+   * Private storage
+   */
+  protected __: any = {
+    attributes: {},
+    parent: null
+  };
 
-	/**
-	 * Traits
-	 */
-	public traits: object = {};
+  constructor(data?: any) {
+    (this.constructor as typeof Model).schema.keys.forEach((key: any) => {
+      if (data && !utils.isUndefined(data[key.name])) {
+        this[key.name] = data[key.name];
+      } else if (utils.isFunction(key.default)) {
+        this[key.name] = key.default();
+      } else if (!utils.isUndefined(key.default)) {
+        this[key.name] = key.default;
+      }
+    });
+  }
 
-	/**
-	 * Types
-	 */
-	public types: object = {};
+  /**
+   * Load data
+   */
+  load(data?: any): Model {
+    const schema = (this.constructor as typeof Model).schema;
+    if (!utils.isUndefined(data)) {
+      utils.forEach(data, (value: any, key: any) => {
+        if (!utils.isUndefined(value) && !utils.isUndefined(schema.cache.index.keys[key])) {
+          this[key] = value;
+        }
+      });
+    }
+    return this;
+  }
 
-	/**
-	 * The utilities
-	 */
-	public utils: any = utils;
+  /**
+   * Call parent method
+   */
+  super(method: string, args?: Array<any>) {
+    return utils.getParent(this.constructor as typeof Model).prototype[method].apply(this, args || []);
+  }
 
-	/**
-	 * Booted
-	 */
-	private booted: boolean = false;
+  /**
+   * To JSON
+   */
+  toJSON(exclude?: any, include?: any, replacer?: any, space?: number): string {
+    return this.toObject(exclude, include);
+  }
 
-	/**
-	 * Collections
-	 */
-	private collections: object = {};
+  /**
+   * Convert model to object
+   */
+  toObject(include?: any, exclude?: any): any {
+    const object = {};
+    if (include && !include.__flattened) {
+      include = utils.flatten(include);
+    }
+    if (exclude && !exclude.__flattened) {
+      exclude = utils.flatten(exclude);
+    }
+    (this.constructor as typeof Model).schema.keys.forEach((key: any) => {
+      if (key.name !== '__' && (!exclude || exclude[key.name] !== true)) {
+        evaluate(key.name, this[key.name]);
+      }
+    });
+    if (include) {
+      utils.forEach(include, (children: any, key: string) => {
+        evaluate(key, this[key]);
+      });
+    }
+    return object;
 
-	/**
-	 * Models
-	 */
-	private models: object = {};
+    /**
+     * Evaluate
+     */
+    function evaluate(key: string, value: any) {
+      if (value && utils.isFunction(value.toObject)) {
+        value = value.toObject(
+          (include && (typeof include[key] !== 'boolean')) ? include[key] : utils.undefined,
+          (exclude && (typeof exclude[key] !== 'boolean')) ? exclude[key] : utils.undefined);
+      }
+      if (!utils.isUndefined(value)) {
+        object[key] = value;
+      }
+    }
+  }
 
-	/**
-	 * Schemas
-	 */
-	private schemas: object = {
-		collections: {},
-		models: {}
-	};
-
-	/**
-	 * Model constructor
-	 */
-	constructor() {
-		utils.model = this;
-		this.schemas.collections.__keys = [];
-		this.schemas.models.__keys = [];
-		this.traits.__keys = [];
-		this.traits.__length = 0;
-		this.types.__keys = [];
-		this.types.__length = 0;
-		// Initial types are Javascript Native types
-    this.type('Array', Array);
-    this.type('Boolean', Boolean);
-    this.type('Date', Date);
-    this.type('Number', Number);
-    this.type('Object', Object);
-    this.type('String', String);
-    // Set Collection and Model
-    this.type('Model', Model);
-    this.type('Collection', Collection);
-	}
-
-	/**
-	 * Register
-	 */
-	private register(type: string, name: string, schema?: any, inherit?: string, model?: string) {
-		let plural = type + 's';
-		if (utils.isUndefined(schema)) {
-			if (!this.booted) {
-				throw new Error('modeljs must be booted first');
-			}
-			return this[plural][name];
-		} else {
-			if (!(schema instanceof Schema)) {
-				throw new Error('schema must be an instance of `Schema`');
-			}
-			this.schemas[plural][name] = schema.define(this, name, type, model);
-			this.schemas[plural].__keys.push(name);
-			if (!utils.isUndefined(inherit)) {
-				this.schemas[plural][name].inherit(inherit);
-			}
-			return this.schemas[plural][name];
-		}
-	}
-
-	/** 
-	 * Boot up
-	 * Models need to be booted up so that the dependencies within schemas can be properly handled
-	 */
-	public boot() {
-		if (this.booted) {
-			return this;
-		}
-		// Boot models
-		this.schemas.models.__keys.forEach((name) => {
-			if (!utils.isUndefined(this.models[name])) {
-				throw new Error('Model already exists: ' + name);
-			}
-			this.models[name] = this.schemas.models[name].boot().__constructor;
-			this.type(name, this.models[name]);
-		});
-		// Boot collections
-		this.schemas.collections.__keys.forEach((name) => {
-			if (!utils.isUndefined(this.collections[name])) {
-				throw new Error('Collection already exists: ' + name);
-			}
-			this.collections[name] = this.schemas.collections[name].boot().__constructor;
-			this.type(name, this.collections[name]);
-		})
-		// Boot keys
-		this.schemas.models.__keys.forEach((name) => {
-			this.models[name].schema.keys.forEach((key) => {
-				key.boot();
-			});
-		});
-		this.booted = true;
-		return this;
-	}
-
-	/**
-	 * Define a collection
-	 */
-	public collection(name: string, schema?: any, model?: string, inherit?: string) {
-		return this.register('collection', name, schema, inherit, model);
-	}
-
-	/**
-	 * Register or retrieve a Model
-	 */
-	public model(name: string, schema?: any, inherit?: string) {
-		return this.register('model', name, schema, inherit);
-	}
-
-	/**
-	 * Register or retrieve a trait
-	 */
-	public trait(name: any, trait?: Trait) {
-		if (utils.isUndefined(trait)) {
-			if (utils.isUndefined(this.traits[name])) {
-				throw new Error('Trait `' + name + '` does not exist');
-			}
-			return this.traits[name];
-		} else {
-			if (!utils.isUndefined(this.traits[name])) {
-				throw new Error('Trait `' + name + '`already exists');
-			}
-			trait.name = name;
-			this.traits[name] = trait;
-			this.traits.__keys.push(name);
-			this.traits.__length++;
-			return this;
-		}
-	}
-
-	/**
-	 * Register/retrieve type
-	 */
-	public type(name: string, constructor?: any) {
-		if (utils.isUndefined(constructor)) {
-			if (utils.isFunction(name)) {
-				for (let i = 0; i < this.types.__length; i++) {
-					let type = this.types[this.types.__keys[i]];
-					if (type.match(name)) {
-						return type;
-					}
-				}
-			}
-			if (utils.isUndefined(this.types[name])) {
-				throw new Error('Type `' + name + '` does not exist');
-			}
-			return this.types[name];
-		} else {
-			if (!utils.isUndefined(this.types[name])) {
-				throw new Error('Type `' + name + '` already exists');
-			}
-			this.types[name] = new Type(name, constructor);
-			this.types.__keys.push(name);
-			this.types.__length++;
-			return this;
-		}
-	}
+  /**
+   * To string
+   */
+  toString(): string {
+    return this.toJSON();
+  }
 }
-
-/**
- * Export instance
- */
-export let modeljs = new ModelJS();

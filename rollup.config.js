@@ -1,7 +1,7 @@
 import typescript from 'rollup-plugin-typescript';
 
 export default {
-  input: 'src/model.ts',
+  input: 'src/index.ts',
   output: {
   	extend: true,
   	file: 'dist/model.js',
