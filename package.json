@@ -2,7 +2,7 @@
   "name": "javascript-model",
   "description": "Stand-alone Javascript Model to represent documents and collections of documents",
   "author": "Ronald Borla",
-  "version": "3.0.1",
+  "version": "3.0.0",
   "main": "dist/model.js",
   "repository": "https://github.com/ronaldborla/model",
   "license": "MIT",
@@ -12,7 +12,7 @@
   "scripts": {
     "build": "npm run softbuild && npm run uglify",
     "build:html": "rollup --config test.config.js",
-    "softbuild": "rollup -c",
+    "softbuild": "tsc -t es5 -d ./src/index && rollup -c",
     "start": "npm run watch",
     "test": "mocha test/index",
     "uglify": "uglifyjs dist/model.js --output dist/model.min.js",
@@ -32,5 +32,6 @@
     "typescript": "^2.2.0",
     "uglify-js": "^3.3.3"
   },
-  "dependencies": {}
+  "dependencies": {},
+  "types": "src/index.d.ts"
 }

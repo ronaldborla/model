@@ -652,6 +652,7 @@ exports.Key = Key;
 exports.Model = Model;
 exports.Schema = Schema;
 exports.Type = Type;
+exports.Utils = Utils;
 exports.utils = utils;
 exports.ModelJS = ModelJS;
 

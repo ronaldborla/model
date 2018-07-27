@@ -4,9 +4,10 @@ import Key from './key';
 import Model from './model';
 import Schema from './schema';
 import Type from './type';
+import { Utils } from './utils';
 import utils from './utils';
 
-export { Collection, Exception, Key, Model, Schema, Type, utils };
+export { Collection, Exception, Key, Model, Schema, Type, Utils, utils };
 
 /**
  * Model JS
