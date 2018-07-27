@@ -2,7 +2,7 @@
   "name": "javascript-model",
   "description": "Stand-alone Javascript Model to represent documents and collections of documents",
   "author": "Ronald Borla",
-  "version": "3.0.0",
+  "version": "3.0.1",
   "main": "dist/model.js",
   "repository": "https://github.com/ronaldborla/model",
   "license": "MIT",
