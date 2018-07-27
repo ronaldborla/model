@@ -8,14 +8,24 @@ import utils from './utils';
 export default class Schema {
 
   /**
+   * Schema keys
+   */
+  public keys: Array<Key> = [];
+
+  /**
+   * The model
+   */
+  public Model: Model;
+
+  /**
    * The Model JS object
    */
-  private modeljs: any;
+  public modeljs: any;
 
   /**
    * Cache
    */
-  private cache = {
+  public cache = {
     index: {
       keys: {}
     },
@@ -24,16 +34,6 @@ export default class Schema {
       set: {}
     }
   };
-
-  /**
-   * Schema keys
-   */
-  private keys: Array<Key> = [];
-
-  /**
-   * The model
-   */
-  private Model: Model;
 
   constructor(modeljs: any, model: Model) {
     const constructors = [],
@@ -45,7 +45,7 @@ export default class Schema {
     }
     (this.Model as any).Collection = this.modeljs.types[(this.Model as any).Collection];
     (this.Model as any).Collection.Model = this.Model;
-    while (model !== Model) {
+    while (model !== (Model as any)) {
       constructors.push(model);
       model = utils.getParent(model);
     }

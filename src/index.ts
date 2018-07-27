@@ -36,12 +36,12 @@ export class ModelJS {
   /**
    * All types
    */
-  private types = {};
+  public types = {};
 
   /**
    * All schemas
    */
-  private schemas: Array<Schema> = [];
+  public schemas: Array<Schema> = [];
 
   /**
    * Boot Model JS
@@ -53,7 +53,7 @@ export class ModelJS {
       }
     });
     this.schemas.forEach((schema: Schema) => {
-      schema.Model.schema = schema;
+      (schema.Model as any).schema = schema;
     });
     return this;
   }

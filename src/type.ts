@@ -7,27 +7,27 @@ export default class Type {
   /**
    * Type Constructor
    */
-  private Constructor: any;
+  public Constructor: any;
 
   /**
    * Constructor has compare method
    */
-  private hasCompare: boolean;
+  public hasCompare: boolean;
 
   /**
    * The key
    */
-  private key: any;
+  public key: any;
 
   /**
    * Type name
    */
-  private name: string;
+  public name: string;
 
   /**
    * Safe name
    */
-  private safe: string;
+  public safe: string;
 
   constructor(key: any, Constructor: any) {
     this.key = key;

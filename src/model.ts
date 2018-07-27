@@ -8,22 +8,22 @@ export default class Model {
   /**
    * The Collection
    */
-  protected static Collection: any = 'Collection';
+  public static Collection: any = 'Collection';
 
   /**
    * The schema
    */
-  protected static schema: any = {};
+  public static schema: any = {};
 
   /**
    * Is Model
    */
-  private static isModel = true;
+  public static isModel = true;
 
   /**
    * Private storage
    */
-  protected __: any = {
+  public __: any = {
     attributes: {},
     parent: null
   };

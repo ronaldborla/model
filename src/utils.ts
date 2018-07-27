@@ -1,7 +1,7 @@
 /**
  * Utilities
  */
-class Utils {
+export class Utils {
 
   /**
    * Undefined

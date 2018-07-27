@@ -8,17 +8,17 @@ export default class Collection {
   /**
    * The Model
    */
-  protected static Model: any;
+  public static Model: any;
 
   /**
    * Is Collection
    */
-  private static isCollection = true;
+  public static isCollection = true;
 
   /**
    * Private storage
    */
-  protected __: any = {
+  public __: any = {
     parent: null
   };
 

@@ -467,6 +467,10 @@ var Schema = /** @class */ (function () {
     function Schema(modeljs, model) {
         var _this = this;
         /**
+         * Schema keys
+         */
+        this.keys = [];
+        /**
          * Cache
          */
         this.cache = {
@@ -478,10 +482,6 @@ var Schema = /** @class */ (function () {
                 set: {}
             }
         };
-        /**
-         * Schema keys
-         */
-        this.keys = [];
         var constructors = [], schema = {};
         this.modeljs = modeljs;
         this.Model = model;
