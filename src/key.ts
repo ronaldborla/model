@@ -14,6 +14,11 @@ export default class Key {
   public default: any;
 
   /**
+   * Hidden
+   */
+  public hidden: boolean;
+
+  /**
    * Name
    */
   public name: string;
@@ -36,6 +41,7 @@ export default class Key {
   constructor(schema: any, name: string, object: any) {
     const key = this;
     this.default = object.default;
+    this.hidden = (object.hidden === true);
     this.name = name;
     this.options = object.options;
     this.schema = schema;

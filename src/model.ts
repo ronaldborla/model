@@ -81,7 +81,7 @@ export default class Model {
       exclude = utils.flatten(exclude);
     }
     (this.constructor as typeof Model).schema.keys.forEach((key: any) => {
-      if (key.name !== '__' && (!exclude || exclude[key.name] !== true)) {
+      if (key.hidden !== true && key.name !== '__' && (!exclude || exclude[key.name] !== true)) {
         evaluate(key.name, this[key.name]);
       }
     });

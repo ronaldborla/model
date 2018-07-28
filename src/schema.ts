@@ -15,7 +15,7 @@ export default class Schema {
   /**
    * The model
    */
-  public Model: Model;
+  public Model: any;
 
   /**
    * The Model JS object
@@ -35,7 +35,7 @@ export default class Schema {
     }
   };
 
-  constructor(modeljs: any, model: Model) {
+  constructor(modeljs: any, model: any) {
     const constructors = [],
           schema = {};
     this.modeljs = modeljs;
@@ -43,9 +43,9 @@ export default class Schema {
     if (utils.isUndefined(this.modeljs.types[(this.Model as any).Collection])) {
       throw new this.modeljs.Exception('Collection `' + (this.Model as any).Collection + '` is not registered');
     }
-    (this.Model as any).Collection = this.modeljs.types[(this.Model as any).Collection];
-    (this.Model as any).Collection.Model = this.Model;
-    while (model !== (Model as any)) {
+    this.Model.Collection = this.modeljs.types[(this.Model as any).Collection];
+    this.Model.Collection.Model = this.Model;
+    while (model && (model !== (Model as any))) {
       constructors.push(model);
       model = utils.getParent(model);
     }
