@@ -66,7 +66,7 @@ var Model = /** @class */ (function () {
             exclude = utils_1.default.flatten(exclude);
         }
         this.constructor.schema.keys.forEach(function (key) {
-            if (key.name !== '__' && (!exclude || exclude[key.name] !== true)) {
+            if (key.hidden !== true && key.name !== '__' && (!exclude || exclude[key.name] !== true)) {
                 evaluate(key.name, _this[key.name]);
             }
         });

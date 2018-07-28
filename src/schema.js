@@ -32,7 +32,7 @@ var Schema = /** @class */ (function () {
         }
         this.Model.Collection = this.modeljs.types[this.Model.Collection];
         this.Model.Collection.Model = this.Model;
-        while (model !== model_1.default) {
+        while (model && (model !== model_1.default)) {
             constructors.push(model);
             model = utils_1.default.getParent(model);
         }

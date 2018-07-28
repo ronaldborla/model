@@ -10,6 +10,7 @@ var Key = /** @class */ (function () {
     function Key(schema, name, object) {
         var key = this;
         this.default = object.default;
+        this.hidden = (object.hidden === true);
         this.name = name;
         this.options = object.options;
         this.schema = schema;

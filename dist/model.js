@@ -94,7 +94,7 @@ var Utils = /** @class */ (function () {
      * Get parent constructor
      */
     Utils.prototype.getParent = function (constructor) {
-        return Object.getPrototypeOf(constructor.prototype).constructor;
+        return (Object.getPrototypeOf(constructor.prototype) || {}).constructor;
     };
     /**
      * Check if variable is an array
@@ -356,7 +356,7 @@ var Model = /** @class */ (function () {
             exclude = utils.flatten(exclude);
         }
         this.constructor.schema.keys.forEach(function (key) {
-            if (key.name !== '__' && (!exclude || exclude[key.name] !== true)) {
+            if (key.hidden !== true && key.name !== '__' && (!exclude || exclude[key.name] !== true)) {
                 evaluate(key.name, _this[key.name]);
             }
         });
@@ -406,6 +406,7 @@ var Key = /** @class */ (function () {
     function Key(schema, name, object) {
         var key = this;
         this["default"] = object["default"];
+        this.hidden = (object.hidden === true);
         this.name = name;
         this.options = object.options;
         this.schema = schema;
@@ -490,7 +491,7 @@ var Schema = /** @class */ (function () {
         }
         this.Model.Collection = this.modeljs.types[this.Model.Collection];
         this.Model.Collection.Model = this.Model;
-        while (model !== Model) {
+        while (model && (model !== Model)) {
             constructors.push(model);
             model = utils.getParent(model);
         }

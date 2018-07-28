@@ -8,6 +8,10 @@ export default class Key {
      */
     default: any;
     /**
+     * Hidden
+     */
+    hidden: boolean;
+    /**
      * Name
      */
     name: string;

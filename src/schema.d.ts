@@ -1,5 +1,4 @@
 import Key from './key';
-import Model from './model';
 /**
  * Schema
  */
@@ -11,7 +10,7 @@ export default class Schema {
     /**
      * The model
      */
-    Model: Model;
+    Model: any;
     /**
      * The Model JS object
      */
@@ -28,5 +27,5 @@ export default class Schema {
             set: {};
         };
     };
-    constructor(modeljs: any, model: Model);
+    constructor(modeljs: any, model: any);
 }
