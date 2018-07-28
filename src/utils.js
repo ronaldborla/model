@@ -84,7 +84,11 @@ var Utils = /** @class */ (function () {
      * Get parent constructor
      */
     Utils.prototype.getParent = function (constructor) {
-        return (Object.getPrototypeOf(constructor.prototype) || {}).constructor;
+        var parent = Object.getPrototypeOf(constructor.prototype);
+        if (parent) {
+            return parent.constructor;
+        }
+        return null;
     };
     /**
      * Check if variable is an array

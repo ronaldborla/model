@@ -93,7 +93,11 @@ export class Utils {
    * Get parent constructor
    */
   getParent(constructor: any): any {
-    return (Object.getPrototypeOf(constructor.prototype) || {}).constructor;
+    const parent = Object.getPrototypeOf(constructor.prototype);
+    if (parent) {
+      return parent.constructor;
+    }
+    return null;
   }
 
   /**
