@@ -1,7 +1,7 @@
 /**
  * Collection
  */
-export default class Collection {
+export default class Collection extends Array {
     /**
      * The Model
      */

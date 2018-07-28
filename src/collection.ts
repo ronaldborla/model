@@ -3,7 +3,7 @@ import utils from './utils';
 /**
  * Collection
  */
-export default class Collection {
+export default class Collection extends Array {
 
   /**
    * The Model
@@ -23,6 +23,7 @@ export default class Collection {
   };
 
   constructor(items?: any) {
+    super();
     if (!utils.isUndefined(items)) {
       this.load(items);
     }
@@ -48,6 +49,7 @@ export default class Collection {
 /**
  * For some reason, "extends" in typescript doesn't correctly extend an Array
  * Therefore, this needs to be done in a different manner
+ * The "extends Array" statement above is for Typescript consistency
  */
 
 /**

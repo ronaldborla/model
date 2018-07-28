@@ -1,20 +1,33 @@
 "use strict";
+var __extends = (this && this.__extends) || (function () {
+    var extendStatics = Object.setPrototypeOf ||
+        ({ __proto__: [] } instanceof Array && function (d, b) { d.__proto__ = b; }) ||
+        function (d, b) { for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p]; };
+    return function (d, b) {
+        extendStatics(d, b);
+        function __() { this.constructor = d; }
+        d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+    };
+})();
 Object.defineProperty(exports, "__esModule", { value: true });
 var utils_1 = require("./utils");
 /**
  * Collection
  */
-var Collection = /** @class */ (function () {
+var Collection = /** @class */ (function (_super) {
+    __extends(Collection, _super);
     function Collection(items) {
+        var _this = _super.call(this) || this;
         /**
          * Private storage
          */
-        this.__ = {
+        _this.__ = {
             parent: null
         };
         if (!utils_1.default.isUndefined(items)) {
-            this.load(items);
+            _this.load(items);
         }
+        return _this;
     }
     /**
      * Placeholder methods
@@ -36,11 +49,12 @@ var Collection = /** @class */ (function () {
      */
     Collection.isCollection = true;
     return Collection;
-}());
+}(Array));
 exports.default = Collection;
 /**
  * For some reason, "extends" in typescript doesn't correctly extend an Array
  * Therefore, this needs to be done in a different manner
+ * The "extends Array" statement above is for Typescript consistency
  */
 /**
  * Extend Array
