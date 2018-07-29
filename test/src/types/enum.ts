@@ -24,4 +24,11 @@ export default class Enum {
   toString(): string {
     return this.value + '';
   }
+
+  /**
+   * Export
+   */
+  export(): string {
+    return this + '';
+  }
 }

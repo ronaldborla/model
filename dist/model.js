@@ -143,20 +143,17 @@ var utils = new Utils();
 /**
  * Collection
  */
-var Collection = /** @class */ (function (_super) {
-    __extends(Collection, _super);
+var Collection = /** @class */ (function () {
     function Collection(items) {
-        var _this = _super.call(this) || this;
         /**
          * Private storage
          */
-        _this.__ = {
+        this.__ = {
             parent: null
         };
         if (!utils.isUndefined(items)) {
-            _this.load(items);
+            this.load(items);
         }
-        return _this;
     }
     /**
      * Placeholder methods
@@ -178,7 +175,7 @@ var Collection = /** @class */ (function (_super) {
      */
     Collection.isCollection = true;
     return Collection;
-}(Array));
+}());
 /**
  * For some reason, "extends" in typescript doesn't correctly extend an Array
  * Therefore, this needs to be done in a different manner
@@ -378,7 +375,7 @@ var Model = /** @class */ (function () {
          * Evaluate
          */
         function evaluate(key, value) {
-            if (value && utils.isFunction(value.toObject)) {
+            if (value && value.constructor && (value.constructor.isModel === true || value.constructor.isCollection === true)) {
                 value = value.toObject((include && (typeof include[key] !== 'boolean')) ? include[key] : utils.undefined, (exclude && (typeof exclude[key] !== 'boolean')) ? exclude[key] : utils.undefined);
             }
             if (!utils.isUndefined(value)) {
@@ -550,7 +547,7 @@ var Type = /** @class */ (function () {
      * @return -1 if a is less than b, 1 if a is greater than b, 0 if equal
      */
     Type.prototype.compare = function (a, b) {
-        if (this.hasCompare) {
+        if (this.hasCompare === true) {
             return a.compare(b);
         }
         if (a > b) {

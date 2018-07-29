@@ -61,7 +61,7 @@ export default class Type {
    * @return -1 if a is less than b, 1 if a is greater than b, 0 if equal
    */
   compare(a: any, b: any): number {
-    if (this.hasCompare) {
+    if (this.hasCompare === true) {
       return a.compare(b);
     }
     if (a > b) {

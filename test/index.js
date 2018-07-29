@@ -94,7 +94,11 @@ var Utils = /** @class */ (function () {
      * Get parent constructor
      */
     Utils.prototype.getParent = function (constructor) {
-        return Object.getPrototypeOf(constructor.prototype).constructor;
+        var parent = Object.getPrototypeOf(constructor.prototype);
+        if (parent) {
+            return parent.constructor;
+        }
+        return null;
     };
     /**
      * Check if variable is an array
@@ -175,6 +179,7 @@ var Collection = /** @class */ (function () {
 /**
  * For some reason, "extends" in typescript doesn't correctly extend an Array
  * Therefore, this needs to be done in a different manner
+ * The "extends Array" statement above is for Typescript consistency
  */
 /**
  * Extend Array
@@ -356,7 +361,7 @@ var Model = /** @class */ (function () {
             exclude = utils.flatten(exclude);
         }
         this.constructor.schema.keys.forEach(function (key) {
-            if (key.name !== '__' && (!exclude || exclude[key.name] !== true)) {
+            if (key.hidden !== true && key.name !== '__' && (!exclude || exclude[key.name] !== true)) {
                 evaluate(key.name, _this[key.name]);
             }
         });
@@ -370,7 +375,7 @@ var Model = /** @class */ (function () {
          * Evaluate
          */
         function evaluate(key, value) {
-            if (value && utils.isFunction(value.toObject)) {
+            if (value && value.constructor && (value.constructor.isModel === true || value.constructor.isCollection === true)) {
                 value = value.toObject((include && (typeof include[key] !== 'boolean')) ? include[key] : utils.undefined, (exclude && (typeof exclude[key] !== 'boolean')) ? exclude[key] : utils.undefined);
             }
             if (!utils.isUndefined(value)) {
@@ -406,6 +411,7 @@ var Key = /** @class */ (function () {
     function Key(schema, name, object) {
         var key = this;
         this["default"] = object["default"];
+        this.hidden = (object.hidden === true);
         this.name = name;
         this.options = object.options;
         this.schema = schema;
@@ -467,6 +473,10 @@ var Schema = /** @class */ (function () {
     function Schema(modeljs, model) {
         var _this = this;
         /**
+         * Schema keys
+         */
+        this.keys = [];
+        /**
          * Cache
          */
         this.cache = {
@@ -478,10 +488,6 @@ var Schema = /** @class */ (function () {
                 set: {}
             }
         };
-        /**
-         * Schema keys
-         */
-        this.keys = [];
         var constructors = [], schema = {};
         this.modeljs = modeljs;
         this.Model = model;
@@ -490,7 +496,7 @@ var Schema = /** @class */ (function () {
         }
         this.Model.Collection = this.modeljs.types[this.Model.Collection];
         this.Model.Collection.Model = this.Model;
-        while (model !== Model) {
+        while (model && (model !== Model)) {
             constructors.push(model);
             model = utils.getParent(model);
         }
@@ -689,6 +695,12 @@ var Enum = /** @class */ (function () {
     Enum.prototype.toString = function () {
         return this.value + '';
     };
+    /**
+     * Export
+     */
+    Enum.prototype["export"] = function () {
+        return this + '';
+    };
     return Enum;
 }());
 
@@ -700,6 +712,12 @@ var Id = /** @class */ (function () {
     function Id(value) {
         this.value = value;
     }
+    /**
+     * Export
+     */
+    Id.prototype["export"] = function () {
+        return this + '';
+    };
     /**
      * Convert to string
      */
@@ -733,18 +751,6 @@ var Base = /** @class */ (function (_super) {
     function Base() {
         return _super !== null && _super.apply(this, arguments) || this;
     }
-    /**
-     * Get ID as string
-     */
-    Base.prototype.getIdAttribute = function (object) {
-        return (object || {}).value + '';
-    };
-    /**
-     * Get sex as string
-     */
-    Base.prototype.getSexAttribute = function (object) {
-        return (object || {}).value + '';
-    };
     /**
      * Schema
      */
@@ -857,7 +863,7 @@ var Users = /** @class */ (function (_super) {
 var modeljs = new ModelJS();
 modeljs.register([Enum, Id, Permalink, Profile, Profiles, User, Users]).boot();
 var users$$1 = new Users(users$1);
-console.log(users$$1); //users.toJSON(['profile.full_name'], [], null, 2));
+console.log(users$$1.toJSON([], [], null, 2)); //users.toJSON(['profile.full_name'], [], null, 2));
 
 })));
 //# sourceMappingURL=index.js.map

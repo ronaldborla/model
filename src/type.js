@@ -35,7 +35,7 @@ var Type = /** @class */ (function () {
      * @return -1 if a is less than b, 1 if a is greater than b, 0 if equal
      */
     Type.prototype.compare = function (a, b) {
-        if (this.hasCompare) {
+        if (this.hasCompare === true) {
             return a.compare(b);
         }
         if (a > b) {

@@ -3,7 +3,7 @@ import utils from './utils';
 /**
  * Collection
  */
-export default class Collection extends Array {
+export default class Collection {
 
   /**
    * The Model
@@ -23,7 +23,6 @@ export default class Collection extends Array {
   };
 
   constructor(items?: any) {
-    super();
     if (!utils.isUndefined(items)) {
       this.load(items);
     }

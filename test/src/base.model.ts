@@ -20,18 +20,4 @@ export default class Base extends Model {
     }
   };
 
-  /**
-   * Get ID as string
-   */
-  getIdAttribute(object: any): string {
-    return (object || {}).value + '';
-  }
-
-  /**
-   * Get sex as string
-   */
-  getSexAttribute(object: any): string {
-    return (object || {}).value + '';
-  }
-
 }

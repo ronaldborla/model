@@ -14,6 +14,13 @@ export default class Id {
   }
 
   /**
+   * Export
+   */
+  export(): string {
+    return this + '';
+  }
+
+  /**
    * Convert to string
    */
   toString(): string {

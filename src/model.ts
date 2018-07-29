@@ -96,7 +96,7 @@ export default class Model {
      * Evaluate
      */
     function evaluate(key: string, value: any) {
-      if (value && utils.isFunction(value.toObject)) {
+      if (value && value.constructor && (value.constructor.isModel === true || value.constructor.isCollection === true)) {
         value = value.toObject(
           (include && (typeof include[key] !== 'boolean')) ? include[key] : utils.undefined,
           (exclude && (typeof exclude[key] !== 'boolean')) ? exclude[key] : utils.undefined);

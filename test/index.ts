@@ -15,4 +15,4 @@ const modeljs = new ModelJS();
 modeljs.register([Enum, Id, Permalink, Profile, Profiles, User, Users]).boot();
 
 const users = new Users(data);
-console.log(users);//users.toJSON(['profile.full_name'], [], null, 2));
+console.log(users.toJSON([], [], null, 2));

@@ -80,7 +80,7 @@ var Model = /** @class */ (function () {
          * Evaluate
          */
         function evaluate(key, value) {
-            if (value && utils_1.default.isFunction(value.toObject)) {
+            if (value && value.constructor && (value.constructor.isModel === true || value.constructor.isCollection === true)) {
                 value = value.toObject((include && (typeof include[key] !== 'boolean')) ? include[key] : utils_1.default.undefined, (exclude && (typeof exclude[key] !== 'boolean')) ? exclude[key] : utils_1.default.undefined);
             }
             if (!utils_1.default.isUndefined(value)) {
