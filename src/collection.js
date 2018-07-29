@@ -16,13 +16,85 @@ var Collection = /** @class */ (function () {
             this.load(items);
         }
     }
+    Object.defineProperty(Collection.prototype, "length", {
+        get: function () {
+            return 0;
+        },
+        enumerable: true,
+        configurable: true
+    });
     /**
      * Placeholder methods
      */
     Collection.prototype.cast = function (item) {
         return item;
     };
+    Collection.prototype.concat = function () {
+        var items = [];
+        for (var _i = 0; _i < arguments.length; _i++) {
+            items[_i] = arguments[_i];
+        }
+        return [];
+    };
+    Collection.prototype.every = function (callbackfn, thisArg) {
+        return false;
+    };
+    Collection.prototype.filter = function (callbackfn, thisArg) {
+        return [];
+    };
+    Collection.prototype.forEach = function (callbackfn, thisArg) {
+    };
+    Collection.prototype.indexOf = function (searchElement, fromIndex) {
+        return 0;
+    };
+    Collection.prototype.join = function (separator) {
+        return '';
+    };
+    Collection.prototype.lastIndexOf = function (searchElement, fromIndex) {
+        return 0;
+    };
     Collection.prototype.load = function (items) {
+        return this;
+    };
+    Collection.prototype.map = function (callbackfn, thisArg) {
+        return [];
+    };
+    Collection.prototype.pop = function () {
+        return this;
+    };
+    Collection.prototype.push = function () {
+        var args = [];
+        for (var _i = 0; _i < arguments.length; _i++) {
+            args[_i] = arguments[_i];
+        }
+        return 0;
+    };
+    Collection.prototype.reduce = function (callbackfn, initialValue) {
+        return this;
+    };
+    Collection.prototype.reduceRight = function (callbackfn, initialValue) {
+        return this;
+    };
+    Collection.prototype.reverse = function () {
+        return [];
+    };
+    Collection.prototype.shift = function () {
+        return this;
+    };
+    Collection.prototype.slice = function (start, end) {
+        return [];
+    };
+    Collection.prototype.some = function (callbackfn, thisArg) {
+        return false;
+    };
+    Collection.prototype.splice = function (start, deleteCount) {
+        var items = [];
+        for (var _i = 2; _i < arguments.length; _i++) {
+            items[_i - 2] = arguments[_i];
+        }
+        return [];
+    };
+    Collection.prototype.sort = function (compareFn) {
         return this;
     };
     Collection.prototype.toObject = function (include, exclude) {
@@ -30,6 +102,13 @@ var Collection = /** @class */ (function () {
     };
     Collection.prototype.toJSON = function (exclude, include, replacer, space) {
         return '';
+    };
+    Collection.prototype.unshift = function () {
+        var items = [];
+        for (var _i = 0; _i < arguments.length; _i++) {
+            items[_i] = arguments[_i];
+        }
+        return 0;
     };
     /**
      * Is Collection

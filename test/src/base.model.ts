@@ -8,7 +8,7 @@ export default class Base extends Model {
   /**
    * Schema
    */
-  protected static schema: any = {
+  public static schema: any = {
     id: 'Id',
     created: {
       default: Date.now,

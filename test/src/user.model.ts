@@ -8,12 +8,12 @@ export default class User extends Base {
   /**
    * Schema
    */
-  protected static schema: any = {
+  public static schema: any = {
     email: String,
     profile: 'Profile',
     username: String
   };
 
-  protected static Collection = 'Users';
+  public static Collection = 'Users';
 
 }

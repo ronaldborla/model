@@ -8,7 +8,7 @@ export default class Profile extends Base {
   /**
    * Schema
    */
-  protected static schema: any = {
+  public static schema: any = {
     birth_date: Date,
     first_name: String,
     last_name: String,
@@ -23,7 +23,7 @@ export default class Profile extends Base {
     }
   };
 
-  protected static Collection = 'Profiles';
+  public static Collection = 'Profiles';
 
   /**
    * Get full name
