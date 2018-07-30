@@ -42,12 +42,6 @@ var Model = /** @class */ (function () {
         return this;
     };
     /**
-     * Call parent method
-     */
-    Model.prototype.super = function (method, args) {
-        return utils_1.default.getParent(this.constructor).prototype[method].apply(this, args || []);
-    };
-    /**
      * To JSON
      */
     Model.prototype.toJSON = function (exclude, include, replacer, space) {

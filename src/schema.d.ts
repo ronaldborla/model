@@ -18,14 +18,6 @@ export default class Schema {
     /**
      * Cache
      */
-    cache: {
-        index: {
-            keys: {};
-        };
-        mutators: {
-            get: {};
-            set: {};
-        };
-    };
+    cache: any;
     constructor(modeljs: any, model: any);
 }

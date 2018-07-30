@@ -25,7 +25,7 @@ export default class Schema {
   /**
    * Cache
    */
-  public cache = {
+  public cache: any = {
     index: {
       keys: {}
     },

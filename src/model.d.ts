@@ -24,10 +24,6 @@ export default class Model {
      */
     load(data?: any): Model;
     /**
-     * Call parent method
-     */
-    super(method: string, args?: Array<any>): any;
-    /**
      * To JSON
      */
     toJSON(exclude?: any, include?: any, replacer?: any, space?: number): string;

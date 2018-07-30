@@ -56,13 +56,6 @@ export default class Model {
   }
 
   /**
-   * Call parent method
-   */
-  super(method: string, args?: Array<any>) {
-    return utils.getParent(this.constructor as typeof Model).prototype[method].apply(this, args || []);
-  }
-
-  /**
    * To JSON
    */
   toJSON(exclude?: any, include?: any, replacer?: any, space?: number): string {
