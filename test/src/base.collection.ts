@@ -4,7 +4,7 @@ import Model from '../../src/model';
 /**
  * Base Collection
  */
-export default class BaseCollection<Model> extends Collection<Model> {
+export default class BaseCollection extends Collection {
 
 
 }

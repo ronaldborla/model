@@ -17,15 +17,15 @@ var Collection = /** @class */ (function () {
         }
     }
     Object.defineProperty(Collection.prototype, "length", {
+        /**
+         * Placeholder methods
+         */
         get: function () {
             return 0;
         },
         enumerable: true,
         configurable: true
     });
-    /**
-     * Placeholder methods
-     */
     Collection.prototype.cast = function (item) {
         return item;
     };
@@ -36,11 +36,23 @@ var Collection = /** @class */ (function () {
         }
         return [];
     };
+    Collection.prototype.copyWithin = function (target, start, end) {
+        return this;
+    };
     Collection.prototype.every = function (callbackfn, thisArg) {
         return false;
     };
+    Collection.prototype.fill = function (value, start, end) {
+        return this;
+    };
     Collection.prototype.filter = function (callbackfn, thisArg) {
         return [];
+    };
+    Collection.prototype.find = function (callbackfn, thisArg) {
+        return this;
+    };
+    Collection.prototype.findIndex = function (callbackfn, thisArg) {
+        return 0;
     };
     Collection.prototype.forEach = function (callbackfn, thisArg) {
     };
@@ -60,26 +72,26 @@ var Collection = /** @class */ (function () {
         return [];
     };
     Collection.prototype.pop = function () {
-        return this;
+        return undefined;
     };
     Collection.prototype.push = function () {
-        var args = [];
+        var items = [];
         for (var _i = 0; _i < arguments.length; _i++) {
-            args[_i] = arguments[_i];
+            items[_i] = arguments[_i];
         }
         return 0;
     };
     Collection.prototype.reduce = function (callbackfn, initialValue) {
-        return this;
+        return this[0];
     };
     Collection.prototype.reduceRight = function (callbackfn, initialValue) {
-        return this;
+        return this[0];
     };
     Collection.prototype.reverse = function () {
         return [];
     };
     Collection.prototype.shift = function () {
-        return this;
+        return undefined;
     };
     Collection.prototype.slice = function (start, end) {
         return [];
@@ -101,6 +113,12 @@ var Collection = /** @class */ (function () {
         return {};
     };
     Collection.prototype.toJSON = function (exclude, include, replacer, space) {
+        return '';
+    };
+    Collection.prototype.toLocaleString = function () {
+        return '';
+    };
+    Collection.prototype.toString = function () {
         return '';
     };
     Collection.prototype.unshift = function () {

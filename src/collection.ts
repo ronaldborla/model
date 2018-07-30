@@ -4,8 +4,7 @@ import utils from './utils';
 /**
  * Collection
  */
-export default class Collection<Model> implements Array<Model> {
-  [key: number]: Model;
+export default class Collection {
 
   /**
    * The Model
@@ -30,26 +29,37 @@ export default class Collection<Model> implements Array<Model> {
     }
   }
 
-  get length(): number {
-    return 0;
-  }
-
   /**
    * Placeholder methods
    */
+  get length(): number {
+    return 0;
+  }
   cast(item: any): any {
     return item;
   }
   concat(...items: any[]): any[] {
     return [];
   }
-  every(callbackfn: (value: any, index: number, array: any[]) => boolean, thisArg?: any): boolean {
+  copyWithin(target: number, start?: number, end?: number): this {
+    return this;
+  }
+  every(callbackfn: (value: Model, index: number, array: Model[]) => boolean, thisArg?: any): boolean {
     return false;
   }
-  filter(callbackfn: (value: any, index: number, array: any[]) => any, thisArg?: any): any[] {
+  fill(value: any, start?: number, end?: number): this {
+    return this;
+  }
+  filter(callbackfn: (value: Model, index: number, array: Model[]) => any, thisArg?: any): Model[] {
     return [];
   }
-  forEach(callbackfn: (value: any, index: number, array: any[]) => void, thisArg?: any): void {
+  find(callbackfn: (value: any, index: number, array: any[]) => void, thisArg?: any): any {
+    return this;
+  }
+  findIndex(callbackfn: (value: any, index: number, array: any[]) => void, thisArg?: any): number {
+    return 0;
+  }
+  forEach(callbackfn: (value: Model, index: number, array: Model[]) => void, thisArg?: any): void {
   }
   indexOf(searchElement: any, fromIndex?: number): number {
     return 0;
@@ -60,46 +70,52 @@ export default class Collection<Model> implements Array<Model> {
   lastIndexOf(searchElement: any, fromIndex?: number): number {
     return 0;
   }
-  load(items: Array<any>): Collection<Model> {
+  load(items: Array<any>): Collection {
     return this;
   }
-  map<U>(callbackfn: (value: any, index: number, array: any[]) => U, thisArg?: any): U[] {
+  map<U>(callbackfn: (value: Model, index: number, array: Model[]) => U, thisArg?: any): U[] {
     return [];
   }
-  pop(): any {
-    return this;
+  pop(): Model | undefined {
+    return undefined;
   }
-  push(...args: any[]): number {
+  push(...items: any[]): number {
     return 0;
   }
-  reduce(callbackfn: (previousValue: any, currentValue: any, currentIndex: number, array: any[]) => any, initialValue?: any): any {
-    return this;
+  reduce(callbackfn: (previousValue: Model, currentValue: Model, currentIndex: number, array: Model[]) => Model, initialValue?: Model): Model {
+    return this[0];
   }
-  reduceRight(callbackfn: (previousValue: any, currentValue: any, currentIndex: number, array: any[]) => any, initialValue?: any): any {
-    return this;
+  reduceRight(callbackfn: (previousValue: Model, currentValue: Model, currentIndex: number, array: Model[]) => Model, initialValue?: Model): Model {
+    return this[0];
   }
-  reverse(): any[] {
+  reverse(): Model[] {
     return [];
   }
-  shift(): any {
-    return this;
+  shift(): Model | undefined {
+    return undefined;
   }
-  slice(start?: number, end?: number): any[] {
+  slice(start?: number, end?: number): Model[] {
     return [];
   }
-  some(callbackfn: (value: any, index: number, array: any[]) => boolean, thisArg?: any): boolean {
+  some(callbackfn: (value: Model, index: number, array: Model[]) => boolean, thisArg?: any): boolean {
     return false;
   }
-  splice(start: number, deleteCount?: number, ...items: any[]): any[] {
+  splice(start: number, deleteCount?: number, ...items: any[]): Model[] {
     return [];
   }
-  sort(compareFn?: (a: any, b: any) => number) : this {
+  sort(compareFn?: (a: Model, b: Model) => number) : this {
     return this;
   }
   toObject(include?: any, exclude?: any): any {
     return {};
   }
   toJSON(exclude?: any, include?: any, replacer?: any, space?: number): string {
+    return '';
+  }
+  toLocaleString(): string {
+    return '';
+  }
+  toString(): string {
     return '';
   }
   unshift(...items: any[]): number {
@@ -149,7 +165,7 @@ function cast(item: any): any {
 /**
  * Override concat
  */
-function concat(): Collection<Model> {
+function concat(): Collection {
   const length = arguments.length;
   for (let i = 0; i < length; i++) {
     this.push.apply(this, arguments[i]);
@@ -160,7 +176,7 @@ function concat(): Collection<Model> {
 /**
  * Load items
  */
-function load(items: Array<any>): Collection<Model> {
+function load(items: Array<any>): Collection {
   this.push.apply(this, items || []);
   return this;
 }
@@ -177,7 +193,7 @@ function push(): number {
 /**
  * Override splice
  */
-function splice(): Collection<Model> {
+function splice(): Collection {
   const length = arguments.length;
   if (length > 2) {
     for (let i = 2; i < length; i++) {

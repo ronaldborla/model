@@ -42,7 +42,7 @@ export declare class ModelJS {
     /**
      * Get all collections
      */
-    getCollections(): Array<Collection<Model>>;
+    getCollections(): Array<Collection>;
     /**
      * Get all models
      */
