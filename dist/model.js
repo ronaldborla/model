@@ -520,12 +520,15 @@ var Key = /** @class */ (function () {
                 return callMutator.apply(this, ['get', this.__.attributes[key.name]]);
             },
             set: function setAttribute(value) {
-                var previous = this.__.attributes[key.name], options = key.options || utils.undefined;
+                var options = key.options || utils.undefined;
                 if (!utils.isUndefined(options)) {
+                    options.key = key;
                     options.parent = this;
                 }
-                value = setParent(key.type.cast(value, options), this);
-                this.__.attributes[key.name] = value = callMutator.apply(this, ['set', value, previous]);
+                this.__.attributes[key.name] = callMutator.apply(this, ['set',
+                    setParent(key.type.cast(value, options), this),
+                    this.__.attributes[key.name]
+                ]);
             }
         });
         /**
