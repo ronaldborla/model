@@ -59,7 +59,7 @@ export default class Key {
         return callMutator.apply(this, ['get', this.__.attributes[key.name]]);
       },
       set: function setAttribute(value: any) {
-        const options = key.options || utils.undefined;
+        const options = utils.isUndefined(key.options) ? utils.undefined : utils.extend({}, key.options);
         if (!utils.isUndefined(options)) {
           options.key = key;
           options.parent = this;

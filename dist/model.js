@@ -520,7 +520,7 @@ var Key = /** @class */ (function () {
                 return callMutator.apply(this, ['get', this.__.attributes[key.name]]);
             },
             set: function setAttribute(value) {
-                var options = key.options || utils.undefined;
+                var options = utils.isUndefined(key.options) ? utils.undefined : utils.extend({}, key.options);
                 if (!utils.isUndefined(options)) {
                     options.key = key;
                     options.parent = this;

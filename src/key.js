@@ -28,7 +28,7 @@ var Key = /** @class */ (function () {
                 return callMutator.apply(this, ['get', this.__.attributes[key.name]]);
             },
             set: function setAttribute(value) {
-                var options = key.options || utils_1.default.undefined;
+                var options = utils_1.default.isUndefined(key.options) ? utils_1.default.undefined : utils_1.default.extend({}, key.options);
                 if (!utils_1.default.isUndefined(options)) {
                     options.key = key;
                     options.parent = this;
