@@ -3,6 +3,12 @@
  */
 export default class Model {
     /**
+     * Loose property definition
+     * This allows for valid access to dynamic
+     * properties defined in the schema
+     */
+    [key: string]: any;
+    /**
      * The Collection
      */
     static Collection: any;
