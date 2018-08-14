@@ -47,7 +47,7 @@ export class ModelJS {
   /**
    * Boot Model JS
    */
-  boot(): ModelJS {
+  boot(): this {
     Object.keys(this.types).forEach((key: string) => {
       if (this.types[key].isModel === true) {
         this.schemas.push(new this.Schema(this, this.types[key]));
@@ -84,7 +84,7 @@ export class ModelJS {
   /**
    * Register types
    */
-  register(types: any): ModelJS {
+  register(types: any): this {
     if (!utils.isArray(types)) {
       types = [types];
     }

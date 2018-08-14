@@ -38,7 +38,7 @@ export declare class ModelJS {
     /**
      * Boot Model JS
      */
-    boot(): ModelJS;
+    boot(): this;
     /**
      * Get all collections
      */
@@ -50,5 +50,5 @@ export declare class ModelJS {
     /**
      * Register types
      */
-    register(types: any): ModelJS;
+    register(types: any): this;
 }

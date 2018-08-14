@@ -28,7 +28,7 @@ export default class Model {
     /**
      * Load data
      */
-    load(data?: any): Model;
+    load(data?: any): this;
     /**
      * To JSON
      */

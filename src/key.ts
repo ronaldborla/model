@@ -59,13 +59,8 @@ export default class Key {
         return callMutator.apply(this, ['get', this.__.attributes[key.name]]);
       },
       set: function setAttribute(value: any) {
-        const options = utils.isUndefined(key.options) ? utils.undefined : utils.extend({}, key.options);
-        if (!utils.isUndefined(options)) {
-          options.key = key;
-          options.parent = this;
-        }
         this.__.attributes[key.name] = callMutator.apply(this, ['set',
-          setParent(key.type.cast(value, options), this),
+          setParent(key.cast(this, value), this),
           this.__.attributes[key.name]
         ]);
       }
@@ -97,5 +92,17 @@ export default class Key {
       }
       return value;
     }
+  }
+
+  /**
+   * Cast
+   */
+  cast(model: Model, value: any): any {
+    const options = utils.isUndefined(this.options) ? utils.undefined : utils.extend({}, this.options);
+    if (!utils.isUndefined(options)) {
+      options.key = this;
+      options.parent = model;
+    }
+    return this.type.cast(value, options);
   }
 }

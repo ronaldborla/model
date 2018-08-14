@@ -520,13 +520,8 @@ var Key = /** @class */ (function () {
                 return callMutator.apply(this, ['get', this.__.attributes[key.name]]);
             },
             set: function setAttribute(value) {
-                var options = utils.isUndefined(key.options) ? utils.undefined : utils.extend({}, key.options);
-                if (!utils.isUndefined(options)) {
-                    options.key = key;
-                    options.parent = this;
-                }
                 this.__.attributes[key.name] = callMutator.apply(this, ['set',
-                    setParent(key.type.cast(value, options), this),
+                    setParent(key.cast(this, value), this),
                     this.__.attributes[key.name]
                 ]);
             }
@@ -557,6 +552,17 @@ var Key = /** @class */ (function () {
             return value;
         }
     }
+    /**
+     * Cast
+     */
+    Key.prototype.cast = function (model, value) {
+        var options = utils.isUndefined(this.options) ? utils.undefined : utils.extend({}, this.options);
+        if (!utils.isUndefined(options)) {
+            options.key = this;
+            options.parent = model;
+        }
+        return this.type.cast(value, options);
+    };
     return Key;
 }());
 

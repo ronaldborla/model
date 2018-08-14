@@ -28,13 +28,8 @@ var Key = /** @class */ (function () {
                 return callMutator.apply(this, ['get', this.__.attributes[key.name]]);
             },
             set: function setAttribute(value) {
-                var options = utils_1.default.isUndefined(key.options) ? utils_1.default.undefined : utils_1.default.extend({}, key.options);
-                if (!utils_1.default.isUndefined(options)) {
-                    options.key = key;
-                    options.parent = this;
-                }
                 this.__.attributes[key.name] = callMutator.apply(this, ['set',
-                    setParent(key.type.cast(value, options), this),
+                    setParent(key.cast(this, value), this),
                     this.__.attributes[key.name]
                 ]);
             }
@@ -65,6 +60,17 @@ var Key = /** @class */ (function () {
             return value;
         }
     }
+    /**
+     * Cast
+     */
+    Key.prototype.cast = function (model, value) {
+        var options = utils_1.default.isUndefined(this.options) ? utils_1.default.undefined : utils_1.default.extend({}, this.options);
+        if (!utils_1.default.isUndefined(options)) {
+            options.key = this;
+            options.parent = model;
+        }
+        return this.type.cast(value, options);
+    };
     return Key;
 }());
 exports.default = Key;

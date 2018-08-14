@@ -1,3 +1,4 @@
+import Model from './model';
 import Type from './type';
 /**
  * Key
@@ -28,4 +29,8 @@ export default class Key {
      */
     type: Type;
     constructor(schema: any, name: string, object: any);
+    /**
+     * Cast
+     */
+    cast(model: Model, value: any): any;
 }

@@ -49,7 +49,7 @@ export default class Model {
   /**
    * Load data
    */
-  load(data?: any): Model {
+  load(data?: any): this {
     const schema = (this.constructor as typeof Model).schema;
     if (!utils.isUndefined(data)) {
       utils.forEach(data, (value: any, key: any) => {
