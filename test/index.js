@@ -452,7 +452,7 @@ var Model = /** @class */ (function () {
             exclude = utils.flatten(exclude);
         }
         this.constructor.schema.keys.forEach(function (key) {
-            if (key.hidden !== true && key.name !== '__' && (!exclude || exclude[key.name] !== true)) {
+            if (key.hidden !== true && (!exclude || exclude[key.name] !== true)) {
                 evaluate(key.name, _this[key.name]);
             }
         });
@@ -466,8 +466,13 @@ var Model = /** @class */ (function () {
          * Evaluate
          */
         function evaluate(key, value) {
-            if (value && value.constructor && (value.constructor.isModel === true || value.constructor.isCollection === true)) {
-                value = value.toObject((include && (typeof include[key] !== 'boolean')) ? include[key] : utils.undefined, (exclude && (typeof exclude[key] !== 'boolean')) ? exclude[key] : utils.undefined);
+            if (value) {
+                if (value.constructor && (value.constructor.isModel === true || value.constructor.isCollection === true)) {
+                    value = value.toObject((include && (typeof include[key] !== 'boolean')) ? include[key] : utils.undefined, (exclude && (typeof exclude[key] !== 'boolean')) ? exclude[key] : utils.undefined);
+                }
+                else if (utils.isFunction(value.toObject)) {
+                    value = value.toObject();
+                }
             }
             if (!utils.isUndefined(value)) {
                 object[key] = value;
@@ -520,12 +525,10 @@ var Key = /** @class */ (function () {
                 return callMutator.apply(this, ['get', this.__.attributes[key.name]]);
             },
             set: function setAttribute(value) {
-                var previous = this.__.attributes[key.name], options = key.options || utils.undefined;
-                if (!utils.isUndefined(options)) {
-                    options.parent = this;
-                }
-                value = setParent(key.type.cast(value, options), this);
-                this.__.attributes[key.name] = value = callMutator.apply(this, ['set', value, previous]);
+                this.__.attributes[key.name] = callMutator.apply(this, ['set',
+                    setParent(key.cast(this, value), this),
+                    this.__.attributes[key.name]
+                ]);
             }
         });
         /**
@@ -554,6 +557,17 @@ var Key = /** @class */ (function () {
             return value;
         }
     }
+    /**
+     * Cast
+     */
+    Key.prototype.cast = function (model, value) {
+        var options = utils.isUndefined(this.options) ? utils.undefined : utils.extend({}, this.options);
+        if (!utils.isUndefined(options)) {
+            options.key = this;
+            options.parent = model;
+        }
+        return this.type.cast(value, options);
+    };
     return Key;
 }());
 
@@ -781,16 +795,22 @@ var Enum = /** @class */ (function () {
         this.options = options;
     }
     /**
-     * Convert to string
-     */
-    Enum.prototype.toString = function () {
-        return this.value + '';
-    };
-    /**
      * Export
      */
     Enum.prototype["export"] = function () {
         return this + '';
+    };
+    /**
+     * To object
+     */
+    Enum.prototype.toObject = function () {
+        return this["export"]();
+    };
+    /**
+     * Convert to string
+     */
+    Enum.prototype.toString = function () {
+        return this.value + '';
     };
     return Enum;
 }());
@@ -808,6 +828,12 @@ var Id = /** @class */ (function () {
      */
     Id.prototype["export"] = function () {
         return this + '';
+    };
+    /**
+     * Convert to object
+     */
+    Id.prototype.toObject = function () {
+        return this["export"]();
     };
     /**
      * Convert to string

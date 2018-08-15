@@ -19,16 +19,23 @@ export default class Enum {
   }
 
   /**
-   * Convert to string
-   */
-  toString(): string {
-    return this.value + '';
-  }
-
-  /**
    * Export
    */
   export(): string {
     return this + '';
+  }
+
+  /**
+   * To object
+   */
+  toObject(): string {
+    return this.export();
+  }
+
+  /**
+   * Convert to string
+   */
+  toString(): string {
+    return this.value + '';
   }
 }

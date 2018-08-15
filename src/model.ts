@@ -80,7 +80,7 @@ export default class Model {
       exclude = utils.flatten(exclude);
     }
     (this.constructor as typeof Model).schema.keys.forEach((key: any) => {
-      if (key.hidden !== true && key.name !== '__' && (!exclude || exclude[key.name] !== true)) {
+      if (key.hidden !== true && (!exclude || exclude[key.name] !== true)) {
         evaluate(key.name, this[key.name]);
       }
     });
@@ -95,10 +95,14 @@ export default class Model {
      * Evaluate
      */
     function evaluate(key: string, value: any) {
-      if (value && value.constructor && (value.constructor.isModel === true || value.constructor.isCollection === true)) {
-        value = value.toObject(
-          (include && (typeof include[key] !== 'boolean')) ? include[key] : utils.undefined,
-          (exclude && (typeof exclude[key] !== 'boolean')) ? exclude[key] : utils.undefined);
+      if (value) {
+        if (value.constructor && (value.constructor.isModel === true || value.constructor.isCollection === true)) {
+          value = value.toObject(
+            (include && (typeof include[key] !== 'boolean')) ? include[key] : utils.undefined,
+            (exclude && (typeof exclude[key] !== 'boolean')) ? exclude[key] : utils.undefined);
+        } else if (utils.isFunction(value.toObject)) {
+          value = value.toObject();
+        }
       }
       if (!utils.isUndefined(value)) {
         object[key] = value;

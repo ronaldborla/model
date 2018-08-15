@@ -21,6 +21,13 @@ export default class Id {
   }
 
   /**
+   * Convert to object
+   */
+  toObject(): string {
+    return this.export();
+  }
+
+  /**
    * Convert to string
    */
   toString(): string {

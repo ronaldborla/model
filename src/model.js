@@ -60,7 +60,7 @@ var Model = /** @class */ (function () {
             exclude = utils_1.default.flatten(exclude);
         }
         this.constructor.schema.keys.forEach(function (key) {
-            if (key.hidden !== true && key.name !== '__' && (!exclude || exclude[key.name] !== true)) {
+            if (key.hidden !== true && (!exclude || exclude[key.name] !== true)) {
                 evaluate(key.name, _this[key.name]);
             }
         });
@@ -74,8 +74,13 @@ var Model = /** @class */ (function () {
          * Evaluate
          */
         function evaluate(key, value) {
-            if (value && value.constructor && (value.constructor.isModel === true || value.constructor.isCollection === true)) {
-                value = value.toObject((include && (typeof include[key] !== 'boolean')) ? include[key] : utils_1.default.undefined, (exclude && (typeof exclude[key] !== 'boolean')) ? exclude[key] : utils_1.default.undefined);
+            if (value) {
+                if (value.constructor && (value.constructor.isModel === true || value.constructor.isCollection === true)) {
+                    value = value.toObject((include && (typeof include[key] !== 'boolean')) ? include[key] : utils_1.default.undefined, (exclude && (typeof exclude[key] !== 'boolean')) ? exclude[key] : utils_1.default.undefined);
+                }
+                else if (utils_1.default.isFunction(value.toObject)) {
+                    value = value.toObject();
+                }
             }
             if (!utils_1.default.isUndefined(value)) {
                 object[key] = value;

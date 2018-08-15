@@ -452,7 +452,7 @@ var Model = /** @class */ (function () {
             exclude = utils.flatten(exclude);
         }
         this.constructor.schema.keys.forEach(function (key) {
-            if (key.hidden !== true && key.name !== '__' && (!exclude || exclude[key.name] !== true)) {
+            if (key.hidden !== true && (!exclude || exclude[key.name] !== true)) {
                 evaluate(key.name, _this[key.name]);
             }
         });
@@ -466,8 +466,13 @@ var Model = /** @class */ (function () {
          * Evaluate
          */
         function evaluate(key, value) {
-            if (value && value.constructor && (value.constructor.isModel === true || value.constructor.isCollection === true)) {
-                value = value.toObject((include && (typeof include[key] !== 'boolean')) ? include[key] : utils.undefined, (exclude && (typeof exclude[key] !== 'boolean')) ? exclude[key] : utils.undefined);
+            if (value) {
+                if (value.constructor && (value.constructor.isModel === true || value.constructor.isCollection === true)) {
+                    value = value.toObject((include && (typeof include[key] !== 'boolean')) ? include[key] : utils.undefined, (exclude && (typeof exclude[key] !== 'boolean')) ? exclude[key] : utils.undefined);
+                }
+                else if (utils.isFunction(value.toObject)) {
+                    value = value.toObject();
+                }
             }
             if (!utils.isUndefined(value)) {
                 object[key] = value;
