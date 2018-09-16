@@ -23,6 +23,12 @@ export default class Collection {
     parent: null
   };
 
+  /**
+   * Length
+   * Arrays have a "length" writable property
+   */
+  public length: number;
+
   constructor(items?: Array<any>) {
     if (!utils.isUndefined(items)) {
       this.load(items);
@@ -32,9 +38,6 @@ export default class Collection {
   /**
    * Placeholder methods
    */
-  get length(): number {
-    return 0;
-  }
   cast(item: any): any {
     return item;
   }

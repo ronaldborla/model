@@ -155,16 +155,9 @@ var Collection = /** @class */ (function () {
             this.load(items);
         }
     }
-    Object.defineProperty(Collection.prototype, "length", {
-        /**
-         * Placeholder methods
-         */
-        get: function () {
-            return 0;
-        },
-        enumerable: true,
-        configurable: true
-    });
+    /**
+     * Placeholder methods
+     */
     Collection.prototype.cast = function (item) {
         return item;
     };
@@ -980,6 +973,7 @@ var Users = /** @class */ (function (_super) {
 var modeljs = new ModelJS();
 modeljs.register([Enum, Id, Permalink, Profile, Profiles, User, Users]).boot();
 var users$$1 = new Users(users$1);
+console.log(users$$1);
 console.log(users$$1.toJSON([], [], null, 2));
 console.log(users$$1.map(function (user) {
     return user.profile.first_name;

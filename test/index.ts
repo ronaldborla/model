@@ -15,6 +15,7 @@ const modeljs = new ModelJS();
 modeljs.register([Enum, Id, Permalink, Profile, Profiles, User, Users]).boot();
 
 const users = new Users(data);
+console.log(users);
 console.log(users.toJSON([], [], null, 2));
 console.log(users.map((user: User) => {
   return (user as any).profile.first_name;

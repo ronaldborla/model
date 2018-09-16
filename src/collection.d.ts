@@ -15,11 +15,15 @@ export default class Collection {
      * Private storage
      */
     __: any;
+    /**
+     * Length
+     * Arrays have a "length" writable property
+     */
+    length: number;
     constructor(items?: Array<any>);
     /**
      * Placeholder methods
      */
-    readonly length: number;
     cast(item: any): any;
     concat(...items: any[]): any[];
     copyWithin(target: number, start?: number, end?: number): this;

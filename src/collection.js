@@ -16,16 +16,9 @@ var Collection = /** @class */ (function () {
             this.load(items);
         }
     }
-    Object.defineProperty(Collection.prototype, "length", {
-        /**
-         * Placeholder methods
-         */
-        get: function () {
-            return 0;
-        },
-        enumerable: true,
-        configurable: true
-    });
+    /**
+     * Placeholder methods
+     */
     Collection.prototype.cast = function (item) {
         return item;
     };
