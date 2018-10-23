@@ -62,7 +62,7 @@ export class ModelJS {
   /**
    * Get all collections
    */
-  getCollections(): Array<Collection> {
+  getCollections(): Array<Collection<Model>> {
     return Object.keys(this.types).filter((key: string) => {
       return this.types[key].isCollection === true;
     }).map((key) => {

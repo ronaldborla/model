@@ -430,7 +430,7 @@ var Model = /** @class */ (function () {
      * To JSON
      */
     Model.prototype.toJSON = function (exclude, include, replacer, space) {
-        return this.toObject(exclude, include);
+        return JSON.stringify(this.toObject(exclude, include), replacer, space);
     };
     /**
      * Convert model to object
