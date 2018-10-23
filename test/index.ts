@@ -20,3 +20,4 @@ console.log(users.toJSON([], [], null, 2));
 console.log(users.map((user: User) => {
   return (user as any).profile.first_name;
 }));
+users.length = 0;

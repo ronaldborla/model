@@ -65,7 +65,7 @@ export default class Model {
    * To JSON
    */
   toJSON(exclude?: any, include?: any, replacer?: any, space?: number): string {
-    return this.toObject(exclude, include);
+    return JSON.stringify(this.toObject(exclude, include), replacer, space);
   }
 
   /**

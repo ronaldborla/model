@@ -978,6 +978,7 @@ console.log(users$$1.toJSON([], [], null, 2));
 console.log(users$$1.map(function (user) {
     return user.profile.first_name;
 }));
+users$$1.length = 0;
 
 })));
 //# sourceMappingURL=index.js.map
