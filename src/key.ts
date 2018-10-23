@@ -80,6 +80,18 @@ export default class Key {
       if (mutator !== null) {
         value = this[mutator].apply(this, [value, previous]);
       }
+      /**
+       * Use primitive value
+       * When initializing native types such as Boolean, Number, etc.,
+       * an object is returned, causing issues with strict comparison
+       * Therefore, to solve this, the primitive value must be used.
+       * As for custom types, the primitive value returned by valueOf()
+       * is its original form. So theoretically, this will not affect
+       * the custom types
+       */
+      if (value && utils.isFunction(value.valueOf)) {
+        value = value.valueOf();
+      }
       return value;
     }
 
