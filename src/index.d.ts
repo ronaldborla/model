@@ -48,6 +48,10 @@ export declare class ModelJS {
      */
     getModels(): Array<Model>;
     /**
+     * Check if instance is native
+     */
+    isNative(instance: any): boolean;
+    /**
      * Register types
      */
     register(types: any): this;

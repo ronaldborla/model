@@ -539,15 +539,9 @@ var Key = /** @class */ (function () {
                 value = this[mutator].apply(this, [value, previous]);
             }
             /**
-             * Use primitive value
-             * When initializing native types such as Boolean, Number, etc.,
-             * an object is returned, causing issues with strict comparison
-             * Therefore, to solve this, the primitive value must be used.
-             * As for custom types, the primitive value returned by valueOf()
-             * is its original form. So theoretically, this will not affect
-             * the custom types
+             * Make sure that native types return their respective primitive values
              */
-            if (value && utils.isFunction(value.valueOf)) {
+            if (key.schema.modeljs.isNative(value)) {
                 value = value.valueOf();
             }
             return value;
@@ -747,6 +741,21 @@ var ModelJS = /** @class */ (function () {
         });
     };
     /**
+     * Check if instance is native
+     */
+    ModelJS.prototype.isNative = function (instance) {
+        if (instance instanceof Boolean) {
+            return true;
+        }
+        if (instance instanceof Number) {
+            return true;
+        }
+        if (instance instanceof String) {
+            return true;
+        }
+        return false;
+    };
+    /**
      * Register types
      */
     ModelJS.prototype.register = function (types) {
@@ -767,12 +776,14 @@ var users$1 = [
         "email": "john.doe@gmail.com",
         "id": "1",
         "profile": {
+            "age": 30,
             "birth_date": "1980-01-01",
             "first_name": "John",
             "id": "1",
             "last_name": "Doe",
             "middle_name": "Dee",
-            "sex": "male"
+            "sex": "male",
+            "single": false
         },
         "username": "john.doe"
     },
@@ -780,12 +791,14 @@ var users$1 = [
         "email": "jane.doe@gmail.com",
         "id": "2",
         "profile": {
+            "age": 29,
             "birth_date": "1981-12-31",
             "first_name": "Jane",
             "id": "2",
             "last_name": "Doe",
             "middle_name": "Day",
-            "sex": "female"
+            "sex": "female",
+            "single": true
         },
         "username": "jane.doe"
     }
@@ -912,6 +925,7 @@ var Profile = /** @class */ (function (_super) {
      * Schema
      */
     Profile.schema = {
+        age: Number,
         birth_date: Date,
         first_name: String,
         last_name: String,
@@ -923,7 +937,8 @@ var Profile = /** @class */ (function (_super) {
                 'female'
             ],
             type: 'Enum'
-        }
+        },
+        single: Boolean
     };
     Profile.Collection = 'Profiles';
     return Profile;
@@ -991,6 +1006,8 @@ console.log(users$$1.map(function (user) {
     return user.profile.first_name;
 }));
 users$$1.length = 0;
+users$$1[0].profile.age = new Number(30);
+console.log(users$$1[0].profile.toObject());
 
 })));
 //# sourceMappingURL=index.js.map

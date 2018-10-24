@@ -9,6 +9,7 @@ export default class Profile extends Base {
    * Schema
    */
   public static schema: any = {
+    age: Number,
     birth_date: Date,
     first_name: String,
     last_name: String,
@@ -20,7 +21,8 @@ export default class Profile extends Base {
         'female'
       ],
       type: 'Enum'
-    }
+    },
+    single: Boolean
   };
 
   public static Collection = 'Profiles';

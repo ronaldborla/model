@@ -84,6 +84,21 @@ var ModelJS = /** @class */ (function () {
         });
     };
     /**
+     * Check if instance is native
+     */
+    ModelJS.prototype.isNative = function (instance) {
+        if (instance instanceof Boolean) {
+            return true;
+        }
+        if (instance instanceof Number) {
+            return true;
+        }
+        if (instance instanceof String) {
+            return true;
+        }
+        return false;
+    };
+    /**
      * Register types
      */
     ModelJS.prototype.register = function (types) {

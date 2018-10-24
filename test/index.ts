@@ -21,3 +21,7 @@ console.log(users.map((user: User) => {
   return (user as any).profile.first_name;
 }));
 users.length = 0;
+
+
+(users[0] as any).profile.age = new Number(30);
+console.log((users[0] as any).profile.toObject());

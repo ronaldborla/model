@@ -82,6 +82,22 @@ export class ModelJS {
   }
 
   /**
+   * Check if instance is native
+   */
+  isNative(instance: any): boolean {
+    if (instance instanceof Boolean) {
+      return true;
+    }
+    if (instance instanceof Number) {
+      return true;
+    }
+    if (instance instanceof String) {
+      return true;
+    }
+    return false;
+  }
+
+  /**
    * Register types
    */
   register(types: any): this {

@@ -539,15 +539,9 @@ var Key = /** @class */ (function () {
                 value = this[mutator].apply(this, [value, previous]);
             }
             /**
-             * Use primitive value
-             * When initializing native types such as Boolean, Number, etc.,
-             * an object is returned, causing issues with strict comparison
-             * Therefore, to solve this, the primitive value must be used.
-             * As for custom types, the primitive value returned by valueOf()
-             * is its original form. So theoretically, this will not affect
-             * the custom types
+             * Make sure that native types return their respective primitive values
              */
-            if (value && utils.isFunction(value.valueOf)) {
+            if (key.schema.modeljs.isNative(value)) {
                 value = value.valueOf();
             }
             return value;
@@ -745,6 +739,21 @@ var ModelJS = /** @class */ (function () {
         }).map(function (key) {
             return _this.types[key];
         });
+    };
+    /**
+     * Check if instance is native
+     */
+    ModelJS.prototype.isNative = function (instance) {
+        if (instance instanceof Boolean) {
+            return true;
+        }
+        if (instance instanceof Number) {
+            return true;
+        }
+        if (instance instanceof String) {
+            return true;
+        }
+        return false;
     };
     /**
      * Register types
